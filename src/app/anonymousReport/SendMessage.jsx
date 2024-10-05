@@ -8,20 +8,9 @@ function SendMessage() {
   const [imageUrl, setImageUrl] = useState(null);
   const [success, setSuccess] = useState(false);
 
-  useEffect(() => {
-    navigator.mediaDevices
-      .getUserMedia({ video: true })
-      .then((stream) => {
-        const video = document.getElementById("video");
-        video.srcObject = stream;
-      })
-      .catch((err) => {
-        console.error("Error accessing camera:", err);
-      });
-  }, []);
   //   useEffect(() => {
   //     navigator.mediaDevices
-  //       .getUserMedia({ video: { facingMode: { exact: "environment" } } })
+  //       .getUserMedia({ video: true })
   //       .then((stream) => {
   //         const video = document.getElementById("video");
   //         video.srcObject = stream;
@@ -30,6 +19,17 @@ function SendMessage() {
   //         console.error("Error accessing camera:", err);
   //       });
   //   }, []);
+  useEffect(() => {
+    navigator.mediaDevices
+      .getUserMedia({ video: { facingMode: { exact: "environment" } } })
+      .then((stream) => {
+        const video = document.getElementById("video");
+        video.srcObject = stream;
+      })
+      .catch((err) => {
+        console.error("Error accessing camera:", err);
+      });
+  }, []);
 
   const handleCapture = () => {
     const video = document.getElementById("video");
