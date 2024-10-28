@@ -4,13 +4,14 @@ import { Home } from "./components/Home";
 import { Info } from "./components/Info";
 import Search from "./components/Search";
 import { Report } from "./components/Report";
-import { Defense } from "./components/Defense";
+import Defense from "./components/Defense";
 import { useResponsive } from "./hooks/useResponsive";
 import "./App.css";
 
 function App() {
   const [activeTab, setActiveTab] = useState("home");
-  const { deviceType, isMobile, isTablet, isDesktop, isLargeDesktop } = useResponsive();
+  const { deviceType, isMobile, isTablet, isDesktop, isLargeDesktop } =
+    useResponsive();
 
   // Get page title based on active tab
   const getPageTitle = () => {
@@ -56,9 +57,7 @@ function App() {
             <span className="user-name">Sathyameva Jayadhe</span>
             <div className="user-controls">
               {!isMobile && (
-                <span className="device-type-indicator">
-                  {deviceType}
-                </span>
+                <span className="device-type-indicator">{deviceType}</span>
               )}
               <button className="settings-button">
                 <svg
