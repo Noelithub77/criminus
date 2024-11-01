@@ -1,0 +1,103 @@
+Date : 2025-03-01 10:57:09
+Directory : d:\Hackathons\Hackify 2.0\criminus
+Total : 43 files,  12552 codes, 343 comments, 746 blanks, all 13641 lines
+
+Languages
++--------------------+------------+------------+------------+------------+------------+
+| language           | files      | code       | comment    | blank      | total      |
++--------------------+------------+------------+------------+------------+------------+
+| JSON               |          2 |      7,277 |          0 |          2 |      7,279 |
+| JavaScript JSX     |         12 |      2,384 |        113 |        240 |      2,737 |
+| CSS                |          6 |      1,691 |         52 |        265 |      2,008 |
+| JavaScript         |          9 |        324 |        126 |         70 |        520 |
+| HTML               |          1 |        238 |          0 |         25 |        263 |
+| TypeScript JSX     |          2 |        230 |         14 |         33 |        277 |
+| Python             |          2 |        220 |         35 |         77 |        332 |
+| Markdown           |          2 |         94 |          0 |         27 |        121 |
+| JSON with Comments |          2 |         43 |          0 |          2 |         45 |
+| TypeScript         |          2 |         30 |          0 |          3 |         33 |
+| MS SQL             |          1 |         13 |          3 |          2 |         18 |
+| pip requirements   |          1 |          7 |          0 |          0 |          7 |
+| XML                |          1 |          1 |          0 |          0 |          1 |
++--------------------+------------+------------+------------+------------+------------+
+
+Directories
++----------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                                       | files      | code       | comment    | blank      | total      |
++----------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                                          |         43 |     12,552 |        343 |        746 |     13,641 |
+| . (Files)                                                                  |          8 |      7,359 |          1 |         27 |      7,387 |
+| OpenCV                                                                     |          4 |        465 |         35 |        102 |        602 |
+| OpenCV (Files)                                                             |          3 |        227 |         35 |         77 |        339 |
+| OpenCV\templates                                                           |          1 |        238 |          0 |         25 |        263 |
+| src                                                                        |         31 |      4,728 |        307 |        617 |      5,652 |
+| src\app                                                                    |         26 |      4,578 |        259 |        593 |      5,430 |
+| src\app (Files)                                                            |          3 |         75 |          1 |         15 |         91 |
+| src\app\anonymousReport                                                    |          3 |        227 |         12 |         23 |        262 |
+| src\app\api                                                                |          1 |         99 |         24 |         17 |        140 |
+| src\app\api\analyze-links                                                  |          1 |         99 |         24 |         17 |        140 |
+| src\app\dispatch                                                           |          2 |        811 |         53 |        112 |        976 |
+| src\app\frontend                                                           |         14 |      2,900 |        144 |        361 |      3,405 |
+| src\app\frontend (Files)                                                   |          4 |      1,288 |         39 |        187 |      1,514 |
+| src\app\frontend\assets                                                    |          1 |          1 |          0 |          0 |          1 |
+| src\app\frontend\components                                                |          7 |      1,538 |         49 |        154 |      1,741 |
+| src\app\frontend\hooks                                                     |          1 |         37 |          5 |          7 |         49 |
+| src\app\frontend\utils                                                     |          1 |         36 |         51 |         13 |        100 |
+| src\app\sensor                                                             |          1 |         75 |          0 |          8 |         83 |
+| src\app\spam                                                               |          1 |        283 |         23 |         42 |        348 |
+| src\app\supa                                                               |          1 |        108 |          2 |         15 |        125 |
+| src\db                                                                     |          1 |         13 |          3 |          2 |         18 |
+| src\utils                                                                  |          4 |        137 |         45 |         22 |        204 |
+| src\utils (Files)                                                          |          2 |        107 |         45 |         19 |        171 |
+| src\utils\supabase                                                         |          2 |         30 |          0 |          3 |         33 |
++----------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++----------------------------------------------------------------------------+--------------------+------------+------------+------------+------------+
+| filename                                                                   | language           | code       | comment    | blank      | total      |
++----------------------------------------------------------------------------+--------------------+------------+------------+------------+------------+
+| d:\Hackathons\Hackify 2.0\criminus\OpenCV\detect_gender_webcam.py          | Python             |         90 |         21 |         34 |        145 |
+| d:\Hackathons\Hackify 2.0\criminus\OpenCV\flask_app.py                     | Python             |        130 |         14 |         43 |        187 |
+| d:\Hackathons\Hackify 2.0\criminus\OpenCV\requirements.txt                 | pip requirements   |          7 |          0 |          0 |          7 |
+| d:\Hackathons\Hackify 2.0\criminus\OpenCV\templates\index.html             | HTML               |        238 |          0 |         25 |        263 |
+| d:\Hackathons\Hackify 2.0\criminus\README.md                               | Markdown           |         23 |          0 |         14 |         37 |
+| d:\Hackathons\Hackify 2.0\criminus\eslint.config.mjs                       | JavaScript         |         10 |          0 |          5 |         15 |
+| d:\Hackathons\Hackify 2.0\criminus\jsconfig.json                           | JSON with Comments |          8 |          0 |          1 |          9 |
+| d:\Hackathons\Hackify 2.0\criminus\next.config.mjs                         | JavaScript         |          2 |          1 |          2 |          5 |
+| d:\Hackathons\Hackify 2.0\criminus\package-lock.json                       | JSON               |      7,240 |          0 |          1 |      7,241 |
+| d:\Hackathons\Hackify 2.0\criminus\package.json                            | JSON               |         37 |          0 |          1 |         38 |
+| d:\Hackathons\Hackify 2.0\criminus\postcss.config.mjs                      | JavaScript         |          4 |          0 |          2 |          6 |
+| d:\Hackathons\Hackify 2.0\criminus\src\app\anonymousReport\App.css         | CSS                |         90 |          0 |          2 |         92 |
+| d:\Hackathons\Hackify 2.0\criminus\src\app\anonymousReport\SendMessage.tsx | TypeScript JSX     |        122 |         12 |         18 |        152 |
+| d:\Hackathons\Hackify 2.0\criminus\src\app\anonymousReport\page.jsx        | JavaScript JSX     |         15 |          0 |          3 |         18 |
+| d:\Hackathons\Hackify 2.0\criminus\src\app\api\analyze-links\route.js      | JavaScript         |         99 |         24 |         17 |        140 |
+| d:\Hackathons\Hackify 2.0\criminus\src\app\dispatch\README.md              | Markdown           |         71 |          0 |         13 |         84 |
+| d:\Hackathons\Hackify 2.0\criminus\src\app\dispatch\page.jsx               | JavaScript JSX     |        740 |         53 |         99 |        892 |
+| d:\Hackathons\Hackify 2.0\criminus\src\app\frontend\App.css                | CSS                |      1,040 |         38 |        169 |      1,247 |
+| d:\Hackathons\Hackify 2.0\criminus\src\app\frontend\assets\react.svg       | XML                |          1 |          0 |          0 |          1 |
+| d:\Hackathons\Hackify 2.0\criminus\src\app\frontend\components\Defense.css | CSS                |        359 |         14 |         62 |        435 |
+| d:\Hackathons\Hackify 2.0\criminus\src\app\frontend\components\Defense.jsx | JavaScript JSX     |        397 |         20 |         30 |        447 |
+| d:\Hackathons\Hackify 2.0\criminus\src\app\frontend\components\Home.jsx    | JavaScript JSX     |         82 |          2 |          7 |         91 |
+| d:\Hackathons\Hackify 2.0\criminus\src\app\frontend\components\Info.css    | CSS                |        121 |          0 |         19 |        140 |
+| d:\Hackathons\Hackify 2.0\criminus\src\app\frontend\components\Info.jsx    | JavaScript JSX     |        274 |          2 |         11 |        287 |
+| d:\Hackathons\Hackify 2.0\criminus\src\app\frontend\components\Report.jsx  | JavaScript JSX     |         36 |          0 |          2 |         38 |
+| d:\Hackathons\Hackify 2.0\criminus\src\app\frontend\components\Search.jsx  | JavaScript JSX     |        269 |         11 |         23 |        303 |
+| d:\Hackathons\Hackify 2.0\criminus\src\app\frontend\hooks\useResponsive.js | JavaScript         |         37 |          5 |          7 |         49 |
+| d:\Hackathons\Hackify 2.0\criminus\src\app\frontend\index.css              | CSS                |         61 |          0 |          8 |         69 |
+| d:\Hackathons\Hackify 2.0\criminus\src\app\frontend\main.jsx               | JavaScript JSX     |          9 |          0 |          2 |         11 |
+| d:\Hackathons\Hackify 2.0\criminus\src\app\frontend\page.jsx               | JavaScript JSX     |        178 |          1 |          8 |        187 |
+| d:\Hackathons\Hackify 2.0\criminus\src\app\frontend\utils\responsive.js    | JavaScript         |         36 |         51 |         13 |        100 |
+| d:\Hackathons\Hackify 2.0\criminus\src\app\globals.css                     | CSS                |         20 |          0 |          5 |         25 |
+| d:\Hackathons\Hackify 2.0\criminus\src\app\layout.js                       | JavaScript         |         29 |          0 |          5 |         34 |
+| d:\Hackathons\Hackify 2.0\criminus\src\app\page.jsx                        | JavaScript JSX     |         26 |          1 |          5 |         32 |
+| d:\Hackathons\Hackify 2.0\criminus\src\app\sensor\page.jsx                 | JavaScript JSX     |         75 |          0 |          8 |         83 |
+| d:\Hackathons\Hackify 2.0\criminus\src\app\spam\page.jsx                   | JavaScript JSX     |        283 |         23 |         42 |        348 |
+| d:\Hackathons\Hackify 2.0\criminus\src\app\supa\page.tsx                   | TypeScript JSX     |        108 |          2 |         15 |        125 |
+| d:\Hackathons\Hackify 2.0\criminus\src\db\schema.sql                       | MS SQL             |         13 |          3 |          2 |         18 |
+| d:\Hackathons\Hackify 2.0\criminus\src\utils\linkScraper.js                | JavaScript         |         47 |         16 |          8 |         71 |
+| d:\Hackathons\Hackify 2.0\criminus\src\utils\speechUtils.js                | JavaScript         |         60 |         29 |         11 |        100 |
+| d:\Hackathons\Hackify 2.0\criminus\src\utils\supabase\client.ts            | TypeScript         |          7 |          0 |          1 |          8 |
+| d:\Hackathons\Hackify 2.0\criminus\src\utils\supabase\server.ts            | TypeScript         |         23 |          0 |          2 |         25 |
+| d:\Hackathons\Hackify 2.0\criminus\tsconfig.json                           | JSON with Comments |         35 |          0 |          1 |         36 |
+| Total                                                                      |                    |     12,552 |        343 |        746 |     13,641 |
++----------------------------------------------------------------------------+--------------------+------------+------------+------------+------------+
