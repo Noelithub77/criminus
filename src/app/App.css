@@ -922,29 +922,29 @@ body {
     max-width: 100%;
     margin: 0;
   }
-  
+
   .search-container {
     padding: 12px;
     border-radius: 0;
   }
-  
+
   .search-title {
     font-size: 18px;
   }
-  
+
   .mascot-image-container {
     width: 120px;
     height: 120px;
   }
-  
+
   .search-wrapper {
     width: 100%;
   }
-  
+
   .search-input {
     font-size: 14px;
   }
-  
+
   .search-item-text {
     font-size: 13px;
   }
@@ -955,11 +955,11 @@ body {
     max-width: 90%;
     margin: 0 auto;
   }
-  
+
   .search-container {
     padding: 20px;
   }
-  
+
   .search-wrapper {
     max-width: 500px;
   }
@@ -970,31 +970,31 @@ body {
     max-width: 900px;
     margin: 0 auto;
   }
-  
+
   .search-container {
     padding: 24px;
     border-radius: 16px;
   }
-  
+
   .search-title {
     font-size: 24px;
   }
-  
+
   .recent-searches {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 12px;
   }
-  
+
   .search-wrapper {
     max-width: 600px;
   }
-  
+
   .search-input {
     font-size: 16px;
     padding: 14px 10px;
   }
-  
+
   .search-suggestions {
     max-width: 600px;
     margin: 16px auto;
@@ -1007,7 +1007,7 @@ body {
   .app-container {
     max-width: 100%;
   }
-  
+
   .header-content {
     padding: 0 8px;
   }
@@ -1018,7 +1018,7 @@ body {
   .app-container {
     max-width: 90%;
   }
-  
+
   .tab-navigation {
     max-width: 90%;
     margin: 0 auto;
@@ -1026,11 +1026,11 @@ body {
     right: 0;
     border-radius: 16px 16px 0 0;
   }
-  
+
   .tab-button {
     font-size: 14px;
   }
-  
+
   .tab-button svg {
     width: 28px;
     height: 28px;
@@ -1044,7 +1044,7 @@ body {
     flex-direction: row;
     flex-wrap: wrap;
   }
-  
+
   .app-header {
     position: fixed;
     top: 0;
@@ -1054,23 +1054,23 @@ body {
     left: 0;
     right: 0;
   }
-  
+
   .header-content {
     flex-direction: row;
     align-items: center;
   }
-  
+
   .page-title {
     font-size: 18px;
     margin-right: auto;
   }
-  
+
   .app-content {
     margin-top: 70px;
     padding: 24px;
     padding-left: 100px; /* Space for the sidebar navigation */
   }
-  
+
   .tab-navigation {
     width: 80px;
     height: calc(100vh - 70px);
@@ -1083,17 +1083,17 @@ body {
     border-top: none;
     border-right: 1px solid #2a2a2a;
   }
-  
+
   .tab-button {
     width: 100%;
     padding: 16px 0;
   }
-  
+
   .tab-button svg {
     width: 28px;
     height: 28px;
   }
-  
+
   /* Adjust content containers for desktop */
   .home-container,
   .info-container,
@@ -1104,19 +1104,19 @@ body {
     max-width: 900px;
     margin: 0 auto;
   }
-  
+
   /* Two-column layout for feature cards on desktop */
   .feature-list {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 20px;
   }
-  
+
   /* Make announcement card wider */
   .announcement-card {
     height: 160px;
   }
-  
+
   /* Device Type Indicator */
   .device-type-indicator {
     font-size: 14px;
@@ -1129,15 +1129,15 @@ body {
   .app-container {
     max-width: 1400px;
   }
-  
+
   .app-header {
     max-width: 1400px;
   }
-  
+
   .app-content {
     max-width: 1400px;
   }
-  
+
   /* Three-column layout for feature cards on large desktop */
   .feature-list {
     grid-template-columns: repeat(3, 1fr);
@@ -1150,12 +1150,12 @@ body {
   .app-header {
     display: none;
   }
-  
+
   .app-content {
     margin: 0;
     padding: 0;
   }
-  
+
   body {
     background-color: white;
     color: black;
@@ -1213,7 +1213,6 @@ body {
 /* Focus styles for better accessibility */
 .search-input:focus {
   outline: none;
-  box-shadow: 0 0 0 2px rgba(10, 132, 255, 0.3);
 }
 
 .send-button:focus {
