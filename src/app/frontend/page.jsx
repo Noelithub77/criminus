@@ -52,7 +52,6 @@ function App() {
     <div className="app-container">
       <header className="app-header">
         <div className="header-content">
-          <span className="page-title">{getPageTitle()}</span>
           <div className="user-section">
             <span className="user-name">Sathyameva Jayadhe</span>
             <div className="user-controls">

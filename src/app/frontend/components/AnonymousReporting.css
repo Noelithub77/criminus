@@ -1,5 +1,5 @@
 .anonymous-reporting-container {
-  background-color: #1c1c1c;
+  background-color: #121212;
   color: #ffffff;
   width: 100%;
   max-width: 500px;
@@ -17,7 +17,7 @@
 }
 
 .reporting-header h2 {
-  color: #78b7df;
+  color: white;
   font-size: 18px;
   font-weight: 500;
   margin: 0;
@@ -25,34 +25,34 @@
 }
 
 .map-preview {
-  background-color: #78b7df;
+  background-color: #84a9c0;
   opacity: 0.8;
   border-radius: 12px;
   height: 150px;
   width: 100%;
   display: flex;
   align-items: flex-end;
-  padding: 16px;
+  padding: 5px;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
 }
 
 .location-info {
-  color: #b8b6b6;
+  color: #8a8a8a;
   display: flex;
   flex-direction: column;
 }
 
 .location-info h4 {
   font-size: 16px;
-  font-weight: bold;
   margin: 0;
   margin-bottom: 4px;
+  color: #84a9c0;
 }
 
 .location-info p {
-  font-size: 14px;
+  font-size: 12px;
   margin: 0;
 }
 
@@ -88,6 +88,7 @@
 
 .icon-button span {
   font-size: 12px;
+  color: #84a9c0;
 }
 
 .recording {
