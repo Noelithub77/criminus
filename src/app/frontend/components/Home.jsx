@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import ChildSafety from "./ChildSafety";
 import AnonymousReporting from "./AnonymousReporting";
 import Heatmap from "./Heatmap";
+import Image from "next/image";
 
 export function Home() {
   const [showChildSafety, setShowChildSafety] = useState(false);
@@ -143,19 +144,7 @@ export function Home() {
         <>
           <div className="announcement-section">
             <div className="section-header">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-                <line x1="12" y1="9" x2="12" y2="13"></line>
-                <line x1="12" y1="17" x2="12.01" y2="17"></line>
-              </svg>
+              <img src="/assets/bell.png" />
               <h2>Announcements</h2>
             </div>
             <div className="announcement-card">
@@ -171,7 +160,9 @@ export function Home() {
                 onClick={() => handleRedirect("/spam")}
                 style={{ cursor: "pointer" }}
               >
-                <div className="feature-icon"></div>
+                <div className="feature-icon">
+                  <img src="/assets/scam.svg" />
+                </div>
                 <div className="feature-details">
                   <h3>Scam Detection</h3>
                   <p>
@@ -186,7 +177,9 @@ export function Home() {
                 onClick={handleAnonymousReportingClick}
                 style={{ cursor: "pointer" }}
               >
-                <div className="feature-icon"></div>
+                <div className="feature-icon">
+                  <img src="/assets/report.svg" />
+                </div>
                 <div className="feature-details">
                   <h3>Anonymous Reporting</h3>
                   <p>
@@ -202,19 +195,7 @@ export function Home() {
                 style={{ cursor: "pointer" }}
               >
                 <div className="feature-icon">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
-                  </svg>
+                  <img src="/assets/gender_detect.svg" />
                 </div>
                 <div className="feature-details">
                   <h3>Gender Detection & Safety</h3>
@@ -230,7 +211,9 @@ export function Home() {
                 onClick={handleChildSafetyClick}
                 style={{ cursor: "pointer" }}
               >
-                <div className="feature-icon"></div>
+                <div className="feature-icon">
+                  <img src="/assets/child_safety.svg" />
+                </div>
                 <div className="feature-details">
                   <h3>Child Safety</h3>
                   <p>
@@ -245,7 +228,9 @@ export function Home() {
                 onClick={handleHeatmapClick}
                 style={{ cursor: "pointer" }}
               >
-                <div className="feature-icon"></div>
+                <div className="feature-icon">
+                  <img src="/assets/heatmap.svg" />
+                </div>
                 <div className="feature-details">
                   <h3>Heat Maps</h3>
                   <p>
