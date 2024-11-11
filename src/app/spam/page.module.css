@@ -1,31 +1,468 @@
 .spamContainer {
-  display: flex !important;
-  min-height: 100vh !important;
-  flex-direction: column !important;
-  width: 100vw !important;
-  max-width: 100% !important;
-  margin: 0 !important;
-  padding: 1.5rem !important;
-  background-color: black !important;
-  color: #d1d5db !important;
-  box-sizing: border-box !important;
-}
-
-.contentContainer {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
   width: 100%;
-  max-width: 42rem;
-  margin: 0 auto;
+  max-width: 100%;
+  margin: 0;
+  padding: 1.5rem;
+  background-color: #121212;
+  color: #d1d5db;
+  box-sizing: border-box;
 }
 
-.pageTitle {
+/* Header styling */
+.header {
+  display: flex;
+  height: 5vh;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #2d2d2d;
+  margin-bottom: 1vh;
+}
+.header h1 {
+  font-size: 18px;
+}
+.backButton {
+  display: flex;
+  align-items: center;
+  color: #d1d5db;
+  text-decoration: none;
+  margin-bottom: 1rem;
+}
+
+.backButtonIcon {
+  margin-right: 0.5rem;
+}
+
+.sectionTitle {
+  font-size: 17px;
+  color: #bbbbbb;
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+}
+
+.inputContainer {
+  background-color: rgba(75, 85, 99, 0.3);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.textarea {
+  width: 100%;
+  padding: 0rem;
+  border: 0;
+  border-radius: 0.5rem;
+  min-height: 80px;
+  color: #d1d5db;
+  background-color: transparent;
+  resize: none;
+}
+
+.textarea:focus {
+  outline: none;
+}
+
+.linkIndicator {
+  display: flex;
+  align-items: center;
+  margin-top: 0.5rem;
+  color: #6b7280;
+}
+
+.detectButton {
+  width: 100%;
+  background-color: #3a4e57;
+  color: white;
+  padding: 0.5rem 0rem;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 14px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.detectButton:hover:not(:disabled) {
+  background-color: #2d3c43;
+}
+.detectButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.errorMessage {
+  color: #f87171;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  background-color: rgba(220, 38, 38, 0.3);
+  margin-top: 1rem;
+}
+
+/* Results section styling */
+.resultsSection {
+  margin-top: 2.5rem;
+}
+
+.resultContainer {
+  background-color: #1f1f1f;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+}
+
+.scoreGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.scoreCard {
+  padding: 1rem;
+  background-color: #313131;
+  border-radius: 0.5rem;
+}
+
+.scoreTitle {
+  font-weight: 600;
+}
+
+.spamScoreTitle {
+  color: #fb923c;
+}
+
+.dangerScoreTitle {
+  color: #f87171;
+}
+
+.scoreValue {
   font-size: 1.875rem;
   font-weight: 700;
-  margin-bottom: 2rem;
+}
+
+.spamScoreValue {
+  color: #fdba74;
+}
+
+.dangerScoreValue {
+  color: #fca5a5;
+}
+
+.warningsContainer {
+  background-color: #313131;
+  padding: 1rem;
+  border-radius: 0.5rem;
+}
+
+.warningsList {
+  list-style-type: disc;
+  padding-left: 1.25rem;
+}
+
+.warningItem {
+  margin-bottom: 0.5rem;
+}
+
+/* Link analysis section styling */
+.linkAnalysisSection {
+  margin-top: 2.5rem;
+}
+
+.linkWarning {
+  background-color: rgba(220, 38, 38, 0.3);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid #991b1b;
+}
+
+.linkWarningTitle {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #f87171;
+  margin-bottom: 0.25rem;
+}
+
+.linkWarningText {
+  font-size: 0.75rem;
+  color: #fca5a5;
+}
+
+.linkCard {
+  background-color: #313131;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+  border: 1px solid #313131;
+}
+
+.linkCardSuspicious {
+  border-color: #991b1b;
+}
+
+.linkHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.5rem;
+}
+
+.linkUrl {
+  font-weight: 500;
+  color: #93c5fd;
+  word-break: break-all;
+}
+
+.linkBadges {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.suspiciousBadge {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+  background-color: #7f1d1d;
+  color: #fca5a5;
+  display: flex;
+  align-items: center;
+}
+
+.linkNumberBadge {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+  background-color: #272727;
+  color: #d1d5db;
+}
+
+.linkError {
+  color: #f87171;
+  font-size: 0.875rem;
+  padding: 0.5rem;
+  background-color: rgba(220, 38, 38, 0.3);
+  border-radius: 0.25rem;
+}
+
+.linkInfoGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .linkInfoGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.linkInfoCard {
+  padding: 0.75rem;
+  background-color: #1f1f1f;
+  border-radius: 0.25rem;
+}
+
+.linkInfoLabel {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #9ca3af;
+}
+
+.linkInfoValue {
+  font-size: 0.875rem;
+  color: #d1d5db;
+}
+
+.securityBadges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.formBadge {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+  background-color: rgba(202, 138, 4, 0.3);
+  color: #fcd34d;
+}
+
+.passwordBadge {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+  background-color: rgba(234, 88, 12, 0.3);
+  color: #fdba74;
+}
+
+.loginFormBadge {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+  background-color: rgba(220, 38, 38, 0.3);
+  color: #fca5a5;
+}
+
+.contentPreview {
+  margin-top: 0.5rem;
+}
+
+.contentPreviewLabel {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #9ca3af;
+  margin-bottom: 0.25rem;
+}
+
+.contentPreviewBox {
+  font-size: 0.75rem;
+  padding: 0.75rem;
+  background-color: #1f1f1f;
+  border-radius: 0.25rem;
+  max-height: 8rem;
+  overflow-y: auto;
+}
+
+.contentText {
+  white-space: pre-wrap;
+  color: #d1d5db;
+}
+
+.noContentText {
+  color: #6b7280;
+  font-style: italic;
+}
+
+.headersSection {
+  margin-top: 0.5rem;
+}
+
+.headersLabel {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #9ca3af;
+  margin-bottom: 0.25rem;
+}
+
+.headersList {
+  font-size: 0.75rem;
+  list-style-type: disc;
+  list-style-position: inside;
+  padding-left: 0.5rem;
+}
+
+.headerItem {
+  color: #d1d5db;
+}
+
+.moreHeadersItem {
+  color: #6b7280;
+  font-style: italic;
+}
+
+.linkStats {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.expandButton {
+  margin-top: 0.75rem;
+  font-size: 0.75rem;
+  color: #60a5fa;
+  background: none;
+  border: 1px solid #4b5563;
+  border-radius: 0.25rem;
+  padding: 0.25rem 0;
+  width: 100%;
   text-align: center;
+  cursor: pointer;
+}
+
+.expandButton:hover {
+  color: #93c5fd;
+}
+
+@media (min-width: 768px) {
+  .expandButton {
+    display: none;
+  }
+}
+
+/* App icon and title styling */
+.titleContainer {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.appIcon {
+  width: 4rem;
+  height: 4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.appIconInner {
+  width: 3.5rem;
+  height: 3.5rem;
+  background-color: transparent;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #60a5fa;
+  position: relative;
+}
+
+.appIconLetter {
+  color: #60a5fa;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.appIconBadge {
+  position: absolute;
+  right: -0.25rem;
+  bottom: -0.25rem;
+  width: 2rem;
+  height: 2rem;
+  background-color: #000000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.appTitle {
+  font-size: 18px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+/* Utility classes */
+.hidden {
+  display: none;
+}
+
+.block {
+  display: block;
 }
 
 @media (min-width: 768px) {
   .spamContainer {
-    padding: 6rem;
+    padding: 2rem;
   }
-} 
+
+  .mdBlock {
+    display: block;
+  }
+
+  .mdHidden {
+    display: none;
+  }
+}

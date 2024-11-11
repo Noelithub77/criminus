@@ -263,7 +263,8 @@ export function Home() {
                 <div className="feature-details">
                   <h3>Emergency Dispatch call</h3>
                   <p>
-                    AI-powered emergency dispatch system that provides immediate assistance and guidance during emergencies
+                    AI-powered emergency dispatch system that provides immediate
+                    assistance and guidance during emergencies
                   </p>
                 </div>
               </div>
