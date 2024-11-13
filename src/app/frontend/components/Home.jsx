@@ -20,11 +20,11 @@ export function Home() {
   const handleLeadPredictionClick = () => {
     setShowLeadPrediction(true);
   };
-  
+
   const handleHeatmapClick = () => {
     setShowHeatmap(true);
   };
-  
+
   const handleBackClick = () => {
     setShowChildSafety(false);
     setShowLeadPrediction(false);
@@ -150,7 +150,74 @@ export function Home() {
               <h2>Announcements</h2>
             </div>
             <div className="announcement-card">
-              {/* Placeholder for announcements */}
+              <div
+                style={{
+                  backgroundColor: "#5190a5",
+                  width: "100%",
+                  borderRadius: "20px",
+                  padding: "clamp(12px, 4vw, 20px)",
+                  display: "flex",
+                  flexDirection: "column",
+                  color: "#333",
+                  fontFamily: "Arial, sans-serif",
+                  boxShadow: "0 4px 8px rgba(0,0,0,0.2)",
+                  height: "100%",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: "clamp(8px, 3vw, 15px)",
+                    flexDirection: window.innerWidth <= 400 ? "column" : "row",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: "clamp(40px, 12vw, 60px)",
+                      height: "clamp(40px, 12vw, 60px)",
+                      marginTop: "5px",
+                      alignSelf:
+                        window.innerWidth <= 400 ? "center" : "flex-start",
+                    }}
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                      style={{ width: "100%", height: "100%", fill: "#2a4045" }}
+                    >
+                      <path d="M12,2L4,5v6.09c0,5.05,3.41,9.76,8,10.91c4.59-1.15,8-5.86,8-10.91V5L12,2z M15,15.5h-6v-1.4c0-2,4-3.1,6-3.1V15.5z M12,9c1.1,0,2-0.9,2-2s-0.9-2-2-2s-2,0.9-2,2S10.9,9,12,9z" />
+                    </svg>
+                  </div>
+                  <div
+                    style={{
+                      flex: 1,
+                      textAlign: window.innerWidth <= 400 ? "center" : "left",
+                    }}
+                  >
+                    <h3
+                      style={{
+                        fontSize: "clamp(18px, 5vw, 24px)",
+                        fontWeight: "bold",
+                        margin: "0 0 clamp(6px, 2vw, 10px) 0",
+                        color: "#333",
+                      }}
+                    >
+                      Aluva Cyber Police
+                    </h3>
+                    <p
+                      style={{
+                        fontSize: "clamp(14px, 3.5vw, 16px)",
+                        lineHeight: "1.4",
+                        margin: "0",
+                      }}
+                    >
+                      Online Fraud scam investigation. Apprehend the thief and
+                      earn an opportunity to receive a reward of 1 lakh!
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -185,7 +252,9 @@ export function Home() {
                 <div className="feature-details">
                   <h3>Lead Prediction</h3>
                   <p>
-                    Analyze text for criminal patterns with interactive flowcharts, diagrams, and structured insights for investigations
+                    Analyze text for criminal patterns with interactive
+                    flowcharts, diagrams, and structured insights for
+                    investigations
                   </p>
                 </div>
               </div>
