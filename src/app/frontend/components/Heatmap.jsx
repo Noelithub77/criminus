@@ -223,7 +223,7 @@ const styles = `
 export default function CrimeHeatmap() {
   const { isLoaded } = useJsApiLoader({
     id: "script-loader",
-    googleMapsApiKey: "AIzaSyDG72s5tGbES5N7ZF26tTZw40TvSrm0vIA", // Replace with your actual API key
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY, // Replace with your actual API key
   });
 
   const [map, setMap] = useState(null);

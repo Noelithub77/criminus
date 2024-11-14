@@ -17,7 +17,7 @@ const ChildSafety = () => {
   const [loadingState, setLoadingState] = useState("initializing");
 
   const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: "AIzaSyDG72s5tGbES5N7ZF26tTZw40TvSrm0vIA", // Replace with your API key
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY!, // Replace with your API key
   });
 
   useEffect(() => {
@@ -152,7 +152,9 @@ const ChildSafety = () => {
               const audioElement = e.target as HTMLAudioElement;
               setLoadingState(
                 "audio error: " +
-                  (audioElement.error ? audioElement.error.message : "unknown error")
+                  (audioElement.error
+                    ? audioElement.error.message
+                    : "unknown error")
               );
             }}
             onLoadedData={() => setLoadingState("audio loaded")}
