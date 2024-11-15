@@ -17,7 +17,7 @@ const ChildSafety = () => {
   const [loadingState, setLoadingState] = useState("initializing");
 
   const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: "AIzaSyDG72s5tGbES5N7ZF26tTZw40TvSrm0vIA",
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY!,
   });
 
   useEffect(() => {
