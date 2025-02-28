@@ -1,3 +1,4 @@
+from collections import deque
 from tensorflow.keras.preprocessing.image import img_to_array
 from tensorflow.keras.models import load_model
 import numpy as np
@@ -19,6 +20,12 @@ def calculate_distance(face1, face2):
     center2 = ((face2[0] + face2[2]) // 2, (face2[1] + face2[3]) // 2)
     distance = np.sqrt((center1[0] - center2[0]) ** 2 + (center1[1] - center2[1]) ** 2)
     return distance
+
+# parameters for tracking
+n = 1  # replace with the desired number of males
+distance_threshold = 1000  # adjust distance threshold as needed
+frame_history = 5  # number of frames to track
+alert_queue = deque(maxlen=frame_history)
 
 # loop through frames
 while webcam.isOpened():
@@ -71,8 +78,7 @@ while webcam.isOpened():
                     0.7, (0, 255, 0), 2)
 
     # check for females surrounded by males
-    n = 1  # replace with the desired number of males
-    distance_threshold = 1000  # adjust distance threshold as needed
+    alert = False
     for gender, face in genders:
         if gender == '2woman':
             male_count = 0
@@ -80,7 +86,14 @@ while webcam.isOpened():
                 if other_gender == '1man' and calculate_distance(face, other_face) < distance_threshold:
                     male_count += 1
             if male_count >= n:
-                cv2.putText(frame, "Alert: Female surrounded by males", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+                alert = True
+                break
+
+    alert_queue.append(alert)
+
+    # sound alert if condition holds for all frames in the queue
+    if all(alert_queue):
+        cv2.putText(frame, "Alert: Female surrounded by males", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
 
     # display output
     cv2.imshow("gender detection", cv2.resize(frame, (1280, 720)))
