@@ -1,7 +1,14 @@
 // components/Home.jsx
 import React from "react";
+import { useRouter } from "next/navigation";
 
 export function Home() {
+  const router = useRouter();
+
+  const handleRedirect = (path) => {
+    router.push(path);
+  };
+
   return (
     <div className="home-container">
       <div className="announcement-section">
@@ -29,7 +36,7 @@ export function Home() {
       <div className="features-section">
         <h2>Home</h2>
         <div className="feature-list">
-          <div className="feature-card">
+          <div className="feature-card" onClick={() => handleRedirect("/spam")} style={{ cursor: "pointer" }}>
             <div className="feature-icon"></div>
             <div className="feature-details">
               <h3>Scam Detection</h3>

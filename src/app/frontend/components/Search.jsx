@@ -1,7 +1,10 @@
+'use client';
+
 import React, { useState, useRef, useEffect } from "react";
 import { ArrowUpCircle } from "react-feather";
 import { useResponsive } from "../hooks/useResponsive";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
+import ReactMarkdown from 'react-markdown';
 
 const Search = () => {
   const [isFocused, setIsFocused] = useState(false);
@@ -16,7 +19,12 @@ const Search = () => {
   // Chatbot state
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [streamingMessage, setStreamingMessage] = useState("");
+  const [isStreaming, setIsStreaming] = useState(false);
   const messagesEndRef = useRef(null);
+
+  // Initialize model ref to avoid re-creation on each render
+  const modelRef = useRef(null);
 
   const recentSearches = [
     "How can I protect myself from cyber crimes?",
@@ -38,6 +46,18 @@ const Search = () => {
   };
   
   const suggestions = getSuggestions();
+
+  // Initialize the model only on client-side
+  useEffect(() => {
+    if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_GOOGLE_API_KEY) {
+      modelRef.current = new ChatGoogleGenerativeAI({
+        modelName: "gemini-2.0-flash-lite",
+        maxOutputTokens: 2048,
+        apiKey: process.env.NEXT_PUBLIC_GOOGLE_API_KEY,
+        streaming: true,
+      });
+    }
+  }, []);
 
   // Handle mouse movement for dynamic glow effect
   useEffect(() => {
@@ -62,7 +82,7 @@ const Search = () => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
-  }, [messages]);
+  }, [messages, streamingMessage]);
 
   // Handle keyboard navigation
   const handleKeyDown = (e) => {
@@ -147,23 +167,52 @@ const Search = () => {
         const userMessage = { role: 'user', content: searchQuery };
         setMessages(prev => [...prev, userMessage]);
         
+        // Store the query before clearing the input
+        const currentQuery = searchQuery;
+        
         // Clear input and show loading state
         setSearchQuery("");
         setIsLoading(true);
+        setIsStreaming(true);
+        setStreamingMessage("");
         
-        // Initialize LangChain's Google Genai model
-        const model = new ChatGoogleGenerativeAI({
-          modelName: "gemini-2.0-flash-lite",
-          maxOutputTokens: 2048,
-          apiKey: process.env.NEXT_PUBLIC_GOOGLE_API_KEY,
-        });
+        // Check if model is initialized
+        if (!modelRef.current) {
+          modelRef.current = new ChatGoogleGenerativeAI({
+            modelName: "gemini-2.0-flash-lite",
+            maxOutputTokens: 2048,
+            apiKey: process.env.NEXT_PUBLIC_GOOGLE_API_KEY,
+            streaming: true,
+          });
+        }
         
-        // Get response from the model
-        const response = await model.invoke(searchQuery);
+        // Track the complete response
+        let completeResponse = "";
         
-        // Add AI response to chat
-        const aiMessage = { role: 'assistant', content: response.content };
+        // Get streaming response from the model
+        const streamingResponse = await modelRef.current.invoke(
+          currentQuery,
+          {
+            callbacks: [
+              {
+                handleLLMNewToken(token) {
+                  completeResponse += token;
+                  setStreamingMessage(prev => prev + token);
+                },
+              },
+            ],
+          }
+        );
+        
+        // Small delay to ensure streaming is complete
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // When streaming is complete, add the full message to the chat history
+        // Use the tracked complete response instead of the state variable
+        const aiMessage = { role: 'assistant', content: completeResponse };
         setMessages(prev => [...prev, aiMessage]);
+        setStreamingMessage("");
+        setIsStreaming(false);
       } catch (error) {
         console.error("Error getting response:", error);
         // Add error message to chat
@@ -172,11 +221,51 @@ const Search = () => {
           content: "I'm sorry, I encountered an error processing your request. Please try again." 
         };
         setMessages(prev => [...prev, errorMessage]);
+        setStreamingMessage("");
+        setIsStreaming(false);
       } finally {
         setIsLoading(false);
       }
     }
   };
+
+  // Render markdown content
+  const renderMessageContent = (content) => {
+    return (
+      <ReactMarkdown
+        components={{
+          // Root div wrapper with className
+          root: ({ node, ...props }) => <div className="markdown-content" {...props} />,
+          p: ({ node, ...props }) => <p className="mb-2" {...props} />,
+          h1: ({ node, ...props }) => <h1 className="text-xl font-bold mb-2" {...props} />,
+          h2: ({ node, ...props }) => <h2 className="text-lg font-bold mb-2" {...props} />,
+          h3: ({ node, ...props }) => <h3 className="text-md font-bold mb-1" {...props} />,
+          ul: ({ node, ...props }) => <ul className="list-disc pl-5 mb-2" {...props} />,
+          ol: ({ node, ...props }) => <ol className="list-decimal pl-5 mb-2" {...props} />,
+          li: ({ node, ...props }) => <li className="mb-1" {...props} />,
+          a: ({ node, ...props }) => <a className="text-blue-400 underline" target="_blank" rel="noopener noreferrer" {...props} />,
+          code: ({ node, inline, ...props }) => 
+            inline ? 
+              <code className="bg-gray-800 px-1 rounded text-sm" {...props} /> : 
+              <pre className="bg-gray-800 p-2 rounded my-2 overflow-x-auto">
+                <code className="text-sm" {...props} />
+              </pre>
+        }}
+      >
+        {content}
+      </ReactMarkdown>
+    );
+  };
+
+  // Only render client-side content after hydration
+  const [isClient, setIsClient] = useState(false);
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  if (!isClient) {
+    return <div className="search-page-loading">Loading chat interface...</div>;
+  }
 
   return (
     <div className="search-page">
@@ -185,9 +274,9 @@ const Search = () => {
       </a>
       
       <div className={`search-container ${isDesktop || isLargeDesktop ? 'desktop-layout' : ''}`}>
-        <h2 className="search-title">Chat with J.Ethical</h2>
+        <h2 className="search-title">Chat with J.Ethicat</h2>
         
-        {messages.length === 0 && (
+        {messages.length === 0 && !isStreaming && (
           <div className={`recent-searches ${isFocused ? 'minimized' : ''}`}>
             <h3 className="recent-searches-title">Suggested Questions</h3>
             {recentSearches.map((search, index) => (
@@ -234,19 +323,19 @@ const Search = () => {
           </div>
         )}
 
-        {messages.length === 0 && (
+        {messages.length === 0 && !isStreaming && (
           <div className={`mascot-container ${isFocused ? 'minimized' : ''}`}>
             <div className="mascot">
               <div className="mascot-image-container">
                 <div className="j-ethical-mascot"></div>
               </div>
-              <div className="mascot-name">J.Ethical</div>
+              <div className="mascot-name">J.Ethicat</div>
             </div>
           </div>
         )}
         
         {/* Chat messages */}
-        {messages.length > 0 && (
+        {(messages.length > 0 || isStreaming) && (
           <div className="chat-messages">
             {messages.map((message, index) => (
               <div 
@@ -257,11 +346,27 @@ const Search = () => {
                   {message.role === 'user' ? '👤' : '🤖'}
                 </div>
                 <div className="message-content">
-                  {message.content}
+                  {message.role === 'user' ? 
+                    message.content : 
+                    renderMessageContent(message.content)
+                  }
                 </div>
               </div>
             ))}
-            {isLoading && (
+            
+            {/* Streaming message */}
+            {isStreaming && streamingMessage && (
+              <div className="message ai-message">
+                <div className="message-avatar">🤖</div>
+                <div className="message-content">
+                  {renderMessageContent(streamingMessage)}
+                  <span className="cursor-blink">|</span>
+                </div>
+              </div>
+            )}
+            
+            {/* Loading indicator (only shown before streaming starts) */}
+            {isLoading && !streamingMessage && (
               <div className="message ai-message">
                 <div className="message-avatar">🤖</div>
                 <div className="message-content">
@@ -378,6 +483,15 @@ const Search = () => {
       </div>
       
       <style jsx>{`
+        .search-page-loading {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          min-height: 300px;
+          font-size: 1.2rem;
+          color: rgba(255, 255, 255, 0.7);
+        }
+        
         .chat-messages {
           display: flex;
           flex-direction: column;
@@ -416,6 +530,7 @@ const Search = () => {
           justify-content: center;
           background-color: rgba(255, 255, 255, 0.1);
           font-size: 18px;
+          flex-shrink: 0;
         }
         
         .message-content {
@@ -457,6 +572,21 @@ const Search = () => {
           animation-delay: 0.4s;
         }
         
+        .cursor-blink {
+          display: inline-block;
+          width: 2px;
+          height: 1.2em;
+          background-color: currentColor;
+          margin-left: 2px;
+          animation: blink 1s step-end infinite;
+          opacity: 0.7;
+        }
+        
+        @keyframes blink {
+          0%, 100% { opacity: 0; }
+          50% { opacity: 1; }
+        }
+        
         @keyframes bounce {
           0%, 60%, 100% {
             transform: translateY(0);
@@ -475,6 +605,50 @@ const Search = () => {
             opacity: 1;
             transform: translateY(0);
           }
+        }
+        
+        /* Markdown styles */
+        :global(.markdown-content) {
+          word-break: break-word;
+        }
+        
+        :global(.markdown-content p) {
+          margin-bottom: 0.75rem;
+        }
+        
+        :global(.markdown-content p:last-child) {
+          margin-bottom: 0;
+        }
+        
+        :global(.markdown-content ul),
+        :global(.markdown-content ol) {
+          margin-left: 1.5rem;
+          margin-bottom: 0.75rem;
+        }
+        
+        :global(.markdown-content li) {
+          margin-bottom: 0.25rem;
+        }
+        
+        :global(.markdown-content pre) {
+          background-color: rgba(0, 0, 0, 0.3);
+          padding: 0.75rem;
+          border-radius: 0.5rem;
+          overflow-x: auto;
+          margin: 0.75rem 0;
+        }
+        
+        :global(.markdown-content code) {
+          font-family: monospace;
+          font-size: 0.9em;
+          background-color: rgba(0, 0, 0, 0.2);
+          padding: 0.1rem 0.3rem;
+          border-radius: 0.25rem;
+        }
+        
+        :global(.markdown-content pre code) {
+          background-color: transparent;
+          padding: 0;
         }
       `}</style>
     </div>

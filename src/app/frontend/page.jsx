@@ -21,7 +21,7 @@ function App() {
       case "info":
         return "Information";
       case "search":
-        return "Search";
+        return "Chat";
       case "report":
         return "Report";
       case "defense":
