@@ -1,7 +1,14 @@
 import React, { useState, useEffect } from "react";
-import supabase from "../supabase";
+import { createBrowserClient } from '@supabase/ssr'
 import { Send, Camera } from "react-feather";
 
+export const createClient = () => {
+  return createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+} 
+const supabase = createClient()
 function SendMessage() {
   const [message, setMessage] = useState("");
   const [image, setImage] = useState(null);

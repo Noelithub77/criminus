@@ -1,5 +1,6 @@
-import "./App.css";
-import SendMessage from "./components/SendMessage";
+'use client';
+// import "./App.css";
+import SendMessage from "./SendMessage";
 
 function App() {
   return (
