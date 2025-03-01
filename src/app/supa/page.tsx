@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import React from 'react'
 
@@ -24,23 +24,22 @@ export default function TasksPage() {
   const [newTask, setNewTask] = useState({ title: '', description: '' })
   const supabase = createClient()
 
-  useEffect(() => {
-    fetchTasks()
-  }, [])
-
-  async function fetchTasks() {
+  const fetchTasks = useCallback(async () => {
     const { data, error } = await supabase
       .from('tasks')
       .select('*')
       .order('created_at', { ascending: false })
-
+    
     if (error) {
       console.error('Error fetching tasks:', error)
-      return
+    } else {
+      setTasks(data || [])
     }
+  }, [supabase])
 
-    setTasks(data || [])
-  }
+  useEffect(() => {
+    fetchTasks()
+  }, [fetchTasks])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()

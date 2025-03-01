@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from "react";
 import { createBrowserClient } from "@supabase/ssr";
 import "./AnonymousReporting.css"; // For styling
 import { GoogleMap, useJsApiLoader, Marker } from "@react-google-maps/api";
+import Image from 'next/image';
+
 export const createClient = () => {
   return createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -316,7 +318,13 @@ const AnonymousReporting = () => {
       {mediaPreview && (
         <div className="media-preview">
           {mediaType === "image" ? (
-            <img src={mediaPreview} alt="Selected" />
+            <Image 
+              src={mediaPreview} 
+              alt="Selected" 
+              width={300}
+              height={200}
+              style={{ objectFit: 'contain' }}
+            />
           ) : (
             <div className="audio-preview">
               <audio src={mediaPreview} controls />
@@ -349,6 +357,7 @@ const AnonymousReporting = () => {
         className="submit-button"
         onClick={handleSubmit}
         disabled={isUploading}
+        title="Submit report"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"

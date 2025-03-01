@@ -118,8 +118,8 @@ function SendMessage() {
     <div className="anonymousReportingContainer">
       {success && (
         <div className="anonymousReportingSuccess">
-          Your report has been sent safely! Rest easy—it’s securely and
-          anonymously in the right hands. We've got you!
+          Your report has been sent safely! Rest easy—it&apos;s securely and
+          anonymously in the right hands. We&apos;ve got you!
         </div>
       )}
       <div className="cameraFeed">
