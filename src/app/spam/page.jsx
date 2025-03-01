@@ -4,18 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { analyzeLinkContent, extractUrls } from '../../utils/linkScraper';
 import Link from 'next/link';
-
-// Add CSS to ensure full width
-const pageStyles = {
-  minHeight: '100vh',
-  width: '100vw',
-  maxWidth: '100%',
-  margin: 0,
-  padding: '1.5rem',
-  backgroundColor: 'black',
-  color: '#d1d5db',
-  boxSizing: 'border-box'
-};
+import styles from './page.module.css';
 
 export default function SpamDetection() {
   const [message, setMessage] = useState('');
@@ -27,6 +16,7 @@ export default function SpamDetection() {
   const [isScrapingLinks, setIsScrapingLinks] = useState(false);
   const [expandedLinks, setExpandedLinks] = useState({});
   const textareaRef = useRef(null);
+  const [isMounted, setIsMounted] = useState(false);
 
   // Toggle expanded state for a link
   const toggleLinkExpand = (index) => {
@@ -48,13 +38,31 @@ export default function SpamDetection() {
     adjustTextareaHeight();
   }, [message]);
 
-  // Add effect to force layout recalculation after component mounts
+  // Replace your current useEffect for layout with this
   useEffect(() => {
-    // Force layout recalculation
-    document.body.style.overflow = 'hidden';
-    setTimeout(() => {
+    // Mark component as mounted
+    setIsMounted(true);
+    
+    // Apply critical styles directly to body and html
+    document.documentElement.style.height = '100%';
+    document.body.style.margin = '0';
+    document.body.style.padding = '0';
+    document.body.style.minHeight = '100vh';
+    document.body.style.width = '100%';
+    document.body.style.backgroundColor = 'black';
+    document.body.style.color = '#d1d5db';
+    document.body.style.boxSizing = 'border-box';
+    
+    // Force layout recalculation with a more reliable approach
+    const timer = setTimeout(() => {
+      window.dispatchEvent(new Event('resize'));
+    }, 100);
+    
+    return () => {
+      clearTimeout(timer);
+      // Clean up styles when component unmounts
       document.body.style.overflow = '';
-    }, 0);
+    };
   }, []);
 
   const handleMessageChange = (e) => {
@@ -168,15 +176,26 @@ Content: ${link.scrapedContent || 'N/A'}
     }
   };
 
+  // If not mounted yet, return a pre-styled div to prevent layout shift
+  if (!isMounted) {
+    return (
+      <div className="min-h-screen w-screen max-w-full m-0 p-6 bg-black text-gray-300 box-border">
+        {/* Optional loading indicator */}
+        <div className="flex items-center justify-center h-full">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-400"></div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div style={pageStyles}>
+    <div className={styles.spamContainer}>
       {/* Back button */}
       <div className="mb-6">
         <Link href="/" className="flex items-center text-blue-400 hover:text-blue-300 transition-colors w-fit">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
           </svg>
-          <span>Back to Frontend</span>
         </Link>
       </div>
       

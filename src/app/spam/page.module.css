@@ -1,13 +1,14 @@
 .spamContainer {
-  display: flex;
-  min-height: 100vh;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 1.5rem;
-  width: 100%;
-  max-width: 100%;
-  margin: 0 auto;
+  display: flex !important;
+  min-height: 100vh !important;
+  flex-direction: column !important;
+  width: 100vw !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 1.5rem !important;
+  background-color: black !important;
+  color: #d1d5db !important;
+  box-sizing: border-box !important;
 }
 
 .contentContainer {
