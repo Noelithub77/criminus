@@ -628,8 +628,8 @@ body {
 }
 
 .mascot-container.minimized {
-  padding: 10px 0;
-  max-height: 120px;
+  padding: 1px 0;
+  max-height: 240px;
 }
 
 .mascot {
@@ -639,7 +639,7 @@ body {
 }
 
 .mascot-image-container {
-  width: 180px;
+  width: 240px;
   height: 180px;
   display: flex;
   justify-content: center;
