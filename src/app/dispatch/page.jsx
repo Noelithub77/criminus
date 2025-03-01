@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { initSpeechRecognition, speakText, stopSpeaking } from '../../utils/speechUtils';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export default function DispatchCall() {
   const [isRecording, setIsRecording] = useState(false);
@@ -15,23 +16,43 @@ export default function DispatchCall() {
   const [isListening, setIsListening] = useState(false);
   const [audioFile, setAudioFile] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [inputMode, setInputMode] = useState('speech'); // 'speech' or 'file'
+  const [inputMode, setInputMode] = useState('speech'); // 'speech', 'text', or 'file'
   const [isRecordingAudio, setIsRecordingAudio] = useState(false);
   const [audioChunks, setAudioChunks] = useState([]);
   const [audioBlob, setAudioBlob] = useState(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [transcription, setTranscription] = useState('');
+  const [textInput, setTextInput] = useState('');
+  const [isProcessingText, setIsProcessingText] = useState(false);
   
   const recognitionRef = useRef(null);
   const conversationContainerRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const audioInputRef = useRef(null);
+  const textInputRef = useRef(null);
   
-  // Initialize speech recognition
+  // Initialize Gemini API
+  const genAI = useRef(null);
+  const model = useRef(null);
+  
+  useEffect(() => {
+    // Initialize Gemini API if API key is available
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
+    if (apiKey) {
+      genAI.current = new GoogleGenerativeAI(apiKey);
+      model.current = genAI.current.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
+    }
+  }, []);
+  
+  // Initialize speech recognition with faster response
   useEffect(() => {
     recognitionRef.current = initSpeechRecognition();
     
     if (recognitionRef.current) {
+      // Set continuous to false for faster processing of each utterance
+      recognitionRef.current.continuous = false;
+      recognitionRef.current.interimResults = true;
+      
       recognitionRef.current.onresult = (event) => {
         let interimTranscript = '';
         let finalTranscript = '';
@@ -49,8 +70,13 @@ export default function DispatchCall() {
         setLiveTranscript(interimTranscript);
         
         if (finalTranscript) {
-          setTranscript(prevTranscript => prevTranscript + finalTranscript);
+          setTranscript(finalTranscript.trim());
           setLiveTranscript(''); // Clear interim transcript when final is available
+          
+          // Auto-stop recording when we get a final result for faster processing
+          if (isListening && finalTranscript.trim()) {
+            stopRecording();
+          }
         }
       };
       
@@ -62,7 +88,11 @@ export default function DispatchCall() {
       
       recognitionRef.current.onend = () => {
         if (isListening) {
-          recognitionRef.current.start();
+          try {
+            recognitionRef.current.start();
+          } catch (err) {
+            console.error('Error restarting recognition:', err);
+          }
         }
       };
     } else {
@@ -150,17 +180,15 @@ export default function DispatchCall() {
       return;
     }
     
+    if (!model.current) {
+      setError('Gemini API is not initialized. Please check your API key.');
+      return;
+    }
+    
     try {
       setIsUploading(true);
       setTranscription('Processing audio...');
       setError(''); // Clear any previous errors
-      
-      // Create a FormData object to send the file
-      const formData = new FormData();
-      formData.append('audio', audioFile);
-      
-      // Add conversation history to the form data
-      formData.append('conversationHistory', JSON.stringify(conversationHistory));
       
       // Show processing message in conversation
       const processingMessage = { 
@@ -170,22 +198,81 @@ export default function DispatchCall() {
       };
       setConversationHistory(prev => [...prev, processingMessage]);
       
-      const response = await fetch('/api/dispatch/audio', {
-        method: 'POST',
-        body: formData,
+      // Read the audio file as base64
+      const reader = new FileReader();
+      
+      // Create a promise to handle the FileReader
+      const audioDataPromise = new Promise((resolve, reject) => {
+        reader.onload = () => {
+          const base64Data = reader.result.split(',')[1]; // Remove the data URL prefix
+          resolve(base64Data);
+        };
+        reader.onerror = () => {
+          reject(new Error('Failed to read audio file'));
+        };
       });
+      
+      // Read the file as data URL
+      reader.readAsDataURL(audioFile);
+      
+      // Wait for the file to be read
+      const base64Data = await audioDataPromise;
+      
+      // Format conversation history for context
+      const formattedHistory = conversationHistory
+        .filter(msg => !msg.isProcessing)
+        .map(msg => `${msg.role === 'user' ? 'Caller' : 'Dispatch'}: ${msg.content}`)
+        .join('\n');
+      
+      // Create system prompt
+      const systemPrompt = `You are an emergency dispatch AI assistant. Your job is to:
+1. Remain calm and professional at all times
+2. Gather essential information about the emergency
+3. Provide clear instructions to the caller
+4. Reassure the caller that help is on the way
+5. Keep responses concise and focused on the emergency at hand
+6. Ask for location, nature of emergency, and any immediate dangers
+7. Provide first aid instructions if needed
+
+${formattedHistory ? `Previous conversation:\n${formattedHistory}\n\n` : ''}
+The caller has sent an audio message. Please respond as if you are speaking to the caller directly. Keep your response brief, focused, and helpful. Do not include any prefixes like "Dispatch:" in your response.`;
+      
+      // Create a part for the audio file
+      const audioData = {
+        inlineData: {
+          data: base64Data,
+          mimeType: audioFile.type || "audio/mp3"
+        }
+      };
+      
+      // Process with Gemini
+      const result = await model.current.generateContent([
+        systemPrompt,
+        audioData
+      ]);
       
       // Remove the processing message
       setConversationHistory(prev => prev.filter(msg => !msg.isProcessing));
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to process audio file');
+      // Handle the response based on the Gemini API version
+      let responseText;
+      if (result && result.response) {
+        if (typeof result.response.text === 'function') {
+          responseText = result.response.text();
+        } else if (result.response.text !== undefined) {
+          responseText = result.response.text;
+        } else if (result.response.candidates && result.response.candidates.length > 0) {
+          responseText = result.response.candidates[0].content.parts[0].text;
+        } else {
+          responseText = "I'm sorry, I couldn't process your audio.";
+          console.error("Unexpected response format:", result);
+        }
+      } else {
+        responseText = "I'm sorry, I couldn't process your audio.";
+        console.error("Invalid response:", result);
       }
       
-      const data = await response.json();
-      const responseText = data.response;
-      const audioTranscription = data.transcription || '[Audio processed directly by Gemini]';
+      const audioTranscription = "[Audio processed directly by Gemini]";
       
       setTranscription(audioTranscription);
       
@@ -222,6 +309,9 @@ export default function DispatchCall() {
     } catch (err) {
       setError('Error processing your audio: ' + err.message);
       console.error('Error:', err);
+      
+      // Remove the processing message
+      setConversationHistory(prev => prev.filter(msg => !msg.isProcessing));
     } finally {
       setIsUploading(false);
     }
@@ -261,6 +351,9 @@ export default function DispatchCall() {
       setConversationHistory(prev => [...prev, userMessage]);
       
       await processTranscript();
+      
+      // Clear transcript for next recording
+      setTranscript('');
     }
   };
   
@@ -268,23 +361,51 @@ export default function DispatchCall() {
     try {
       setIsProcessing(true);
       
-      const response = await fetch('/api/dispatch', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          transcript,
-          conversationHistory,
-        }),
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to get response from dispatch API');
+      if (!model.current) {
+        setError('Gemini API is not initialized. Please check your API key.');
+        return;
       }
       
-      const data = await response.json();
-      const responseText = data.response;
+      // Format conversation history for context
+      const formattedHistory = conversationHistory
+        .map(msg => `${msg.role === 'user' ? 'Caller' : 'Dispatch'}: ${msg.content}`)
+        .join('\n');
+      
+      // Create system prompt
+      const systemPrompt = `You are an emergency dispatch AI assistant. Your job is to:
+1. Remain calm and professional at all times
+2. Gather essential information about the emergency
+3. Provide clear instructions to the caller
+4. Reassure the caller that help is on the way
+5. Keep responses concise and focused on the emergency at hand
+6. Ask for location, nature of emergency, and any immediate dangers
+7. Provide first aid instructions if needed
+
+${formattedHistory ? `Previous conversation:\n${formattedHistory}\n\n` : ''}
+Caller's latest message: ${transcript}
+
+Respond as if you are speaking to the caller directly. Keep your response brief, focused, and helpful. Do not include any prefixes like "Dispatch:" in your response.`;
+
+      // Process with Gemini
+      const result = await model.current.generateContent(systemPrompt);
+      
+      // Handle the response based on the Gemini API version
+      let responseText;
+      if (result && result.response) {
+        if (typeof result.response.text === 'function') {
+          responseText = result.response.text();
+        } else if (result.response.text !== undefined) {
+          responseText = result.response.text;
+        } else if (result.response.candidates && result.response.candidates.length > 0) {
+          responseText = result.response.candidates[0].content.parts[0].text;
+        } else {
+          responseText = "I'm sorry, I couldn't process your request.";
+          console.error("Unexpected response format:", result);
+        }
+      } else {
+        responseText = "I'm sorry, I couldn't process your request.";
+        console.error("Invalid response:", result);
+      }
       
       // Add AI response to conversation history
       const aiMessage = { role: 'assistant', content: responseText };
@@ -304,7 +425,7 @@ export default function DispatchCall() {
         }
       );
     } catch (err) {
-      setError('Error getting response from dispatch. Please try again.');
+      setError('Error getting response from Gemini: ' + err.message);
       console.error('Error:', err);
     } finally {
       setIsProcessing(false);
@@ -329,6 +450,8 @@ export default function DispatchCall() {
         if (inputMode === 'speech') {
           startRecording();
         }
+      }, () => {
+        setIsSpeaking(true);
       });
     }, 2000);
   };
@@ -351,8 +474,101 @@ export default function DispatchCall() {
       stopAudioRecording();
     }
     
-    // Toggle mode
-    setInputMode(prev => prev === 'speech' ? 'file' : 'speech');
+    // Toggle mode in a cycle: speech -> text -> file -> speech
+    if (inputMode === 'speech') {
+      setInputMode('text');
+    } else if (inputMode === 'text') {
+      setInputMode('file');
+    } else {
+      setInputMode('speech');
+    }
+  };
+  
+  const handleTextSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!textInput.trim()) return;
+    
+    try {
+      setIsProcessingText(true);
+      setError('');
+      
+      // Add user message to conversation history
+      const userMessage = { role: 'user', content: textInput };
+      setConversationHistory(prev => [...prev, userMessage]);
+      
+      if (!model.current) {
+        setError('Gemini API is not initialized. Please check your API key.');
+        return;
+      }
+      
+      // Format conversation history for context
+      const formattedHistory = conversationHistory
+        .map(msg => `${msg.role === 'user' ? 'Caller' : 'Dispatch'}: ${msg.content}`)
+        .join('\n');
+      
+      // Create system prompt
+      const systemPrompt = `You are an emergency dispatch AI assistant. Your job is to:
+1. Remain calm and professional at all times
+2. Gather essential information about the emergency
+3. Provide clear instructions to the caller
+4. Reassure the caller that help is on the way
+5. Keep responses concise and focused on the emergency at hand
+6. Ask for location, nature of emergency, and any immediate dangers
+7. Provide first aid instructions if needed
+
+${formattedHistory ? `Previous conversation:\n${formattedHistory}\n\n` : ''}
+Caller's latest message: ${textInput}
+
+Respond as if you are speaking to the caller directly. Keep your response brief, focused, and helpful. Do not include any prefixes like "Dispatch:" in your response.`;
+
+      // Process with Gemini
+      const result = await model.current.generateContent(systemPrompt);
+      
+      // Handle the response based on the Gemini API version
+      let responseText;
+      if (result && result.response) {
+        if (typeof result.response.text === 'function') {
+          responseText = result.response.text();
+        } else if (result.response.text !== undefined) {
+          responseText = result.response.text;
+        } else if (result.response.candidates && result.response.candidates.length > 0) {
+          responseText = result.response.candidates[0].content.parts[0].text;
+        } else {
+          responseText = "I'm sorry, I couldn't process your request.";
+          console.error("Unexpected response format:", result);
+        }
+      } else {
+        responseText = "I'm sorry, I couldn't process your request.";
+        console.error("Invalid response:", result);
+      }
+      
+      // Add AI response to conversation history
+      const aiMessage = { role: 'assistant', content: responseText };
+      setConversationHistory(prev => [...prev, aiMessage]);
+      
+      setAiResponse(responseText);
+      
+      // Speak the response
+      setIsSpeaking(true);
+      speakText(responseText, 
+        () => {
+          setIsSpeaking(false);
+        },
+        () => {
+          setIsSpeaking(true);
+        }
+      );
+      
+      // Clear text input
+      setTextInput('');
+      
+    } catch (err) {
+      setError('Error getting response from Gemini: ' + err.message);
+      console.error('Error:', err);
+    } finally {
+      setIsProcessingText(false);
+    }
   };
   
   return (
@@ -376,7 +592,11 @@ export default function DispatchCall() {
                   onClick={toggleInputMode}
                   className="text-xs px-2 py-1 bg-blue-700 rounded-full hover:bg-blue-800"
                 >
-                  {inputMode === 'speech' ? 'Switch to Audio Upload' : 'Switch to Speech'}
+                  {inputMode === 'speech' 
+                    ? 'Switch to Text' 
+                    : inputMode === 'text' 
+                      ? 'Switch to Audio Upload' 
+                      : 'Switch to Speech'}
                 </button>
               )}
               <div className="text-sm font-medium">
@@ -408,17 +628,17 @@ export default function DispatchCall() {
                   {message.isProcessing ? (
                     <div className="flex items-center justify-center gap-2">
                       <div className="w-4 h-4 border-2 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
-                      <p className="text-sm font-medium">{message.content}</p>
+                      <p className="text-sm font-medium">{typeof message.content === 'function' ? 'Processing...' : message.content}</p>
                     </div>
                   ) : message.isAudio ? (
                     <div className="flex items-center gap-2">
                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" />
                       </svg>
-                      <p className="text-sm font-medium">{message.content}</p>
+                      <p className="text-sm font-medium">{typeof message.content === 'function' ? 'Message content unavailable' : message.content}</p>
                     </div>
                   ) : (
-                    <p className="text-sm">{message.content}</p>
+                    <p className="text-sm">{typeof message.content === 'function' ? 'Message content unavailable' : message.content}</p>
                   )}
                 </div>
               ))
@@ -444,7 +664,7 @@ export default function DispatchCall() {
                   <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
                   <p className="text-xs font-medium text-blue-500">Listening...</p>
                 </div>
-                <p className="text-sm">{liveTranscript}</p>
+                <p className="text-sm">{typeof liveTranscript === 'function' ? 'Processing speech...' : liveTranscript}</p>
               </div>
             )}
             
@@ -467,7 +687,7 @@ export default function DispatchCall() {
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
                   </svg>
-                  <p>{error}</p>
+                  <p>{typeof error === 'function' ? 'Error occurred' : error}</p>
                 </div>
               </div>
             )}
@@ -478,6 +698,42 @@ export default function DispatchCall() {
               </div>
             )}
           </div>
+          
+          {/* Input area for text mode */}
+          {inputMode === 'text' && callStatus === 'connected' && (
+            <div className="p-3 bg-gray-50 border-t border-gray-200">
+              <form onSubmit={handleTextSubmit} className="flex gap-2">
+                <input
+                  type="text"
+                  value={textInput}
+                  onChange={(e) => setTextInput(e.target.value)}
+                  placeholder="Type your message..."
+                  className="flex-1 py-2 px-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  disabled={isProcessingText}
+                  ref={textInputRef}
+                />
+                <button
+                  type="submit"
+                  disabled={isProcessingText || !textInput.trim()}
+                  className="py-2 px-4 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {isProcessingText ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>Sending...</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
+                      </svg>
+                      <span>Send</span>
+                    </>
+                  )}
+                </button>
+              </form>
+            </div>
+          )}
           
           {/* Input area for audio file mode */}
           {inputMode === 'file' && callStatus === 'connected' && (

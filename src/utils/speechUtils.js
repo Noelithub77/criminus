@@ -25,7 +25,10 @@ export function speakText(text, onEnd = () => {}, onStart = () => {}) {
     // Cancel any ongoing speech
     window.speechSynthesis.cancel();
     
-    const utterance = new SpeechSynthesisUtterance(text);
+    // Handle case where text might be a function
+    const textToSpeak = typeof text === 'function' ? 'Sorry, there was an error processing the response.' : text;
+    
+    const utterance = new SpeechSynthesisUtterance(textToSpeak);
     utterance.rate = 1.0;
     utterance.pitch = 1.0;
     utterance.volume = 1.0;
@@ -66,9 +69,9 @@ function setPreferredVoice(utterance, voices) {
   const preferredVoice = voices.find(voice => 
     voice.name.includes('Google US English Female') ||
     voice.name.includes('Microsoft Zira') ||
+    voice.name.includes('Natural') ||
     voice.name.includes('Female') ||
-    voice.name.includes('Google') ||
-    voice.name.includes('Natural')
+    voice.name.includes('Google')
   );
   
   if (preferredVoice) {
