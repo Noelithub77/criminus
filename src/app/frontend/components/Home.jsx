@@ -1,12 +1,14 @@
 // components/Home.jsx
 import React from "react";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import ChildSafety from "./ChildSafety";
 import AnonymousReporting from "./AnonymousReporting";
 
 export function Home() {
   const [showChildSafety, setShowChildSafety] = useState(false);
   const [showAnonymousReporting, setShowAnonymousReporting] = useState(false);
+  const router = useRouter();
 
   const handleChildSafetyClick = () => {
     setShowChildSafety(true);
@@ -20,8 +22,6 @@ export function Home() {
     setShowChildSafety(false);
     setShowAnonymousReporting(false);
   };
-
-  const router = useRouter();
 
   const handleRedirect = (path) => {
     router.push(path);

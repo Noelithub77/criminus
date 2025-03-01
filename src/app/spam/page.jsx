@@ -209,7 +209,7 @@ Content: ${link.scrapedContent || 'N/A'}
           <textarea
             ref={textareaRef}
             className="w-full p-3 border-0 rounded-lg min-h-[120px] text-gray-300 bg-transparent resize-none focus:outline-none"
-            placeholder="Enter SMS message to analyze..."
+            placeholder="Enter input..."
             value={message}
             onChange={handleMessageChange}
             rows={4}
