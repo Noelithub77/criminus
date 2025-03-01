@@ -162,6 +162,10 @@ body {
   min-width: 48px; /* Prevent shrinking */
   background-color: #2a2a2a;
   border-radius: 6px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
 }
 
 .feature-details {
