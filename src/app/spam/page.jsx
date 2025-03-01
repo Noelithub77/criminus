@@ -126,7 +126,7 @@ Content: ${link.scrapedContent || 'N/A'}
       <div className="space-y-4">
         <textarea
           ref={textareaRef}
-          className="w-full p-3 border rounded-lg min-h-[100px] text-white resize-none overflow-hidden"
+          className="w-full p-3 border rounded-lg min-h-[100px] text-black bg-white resize-none overflow-hidden"
           placeholder="Enter SMS message here..."
           value={message}
           onChange={handleMessageChange}
@@ -181,7 +181,7 @@ Content: ${link.scrapedContent || 'N/A'}
                             <span className="mr-1">⚠️</span> Suspicious
                           </span>
                         )}
-                        <span className="text-xs px-2 py-1 rounded-full bg-gray-100">Link {index + 1}</span>
+                        <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-800">Link {index + 1}</span>
                       </div>
                     </div>
                     
@@ -195,11 +195,11 @@ Content: ${link.scrapedContent || 'N/A'}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           <div className="p-3 bg-gray-50 rounded">
                             <p className="text-sm font-medium text-gray-700">Title</p>
-                            <p className="text-sm">{link.title || 'N/A'}</p>
+                            <p className="text-sm text-gray-900">{link.title || 'N/A'}</p>
                           </div>
                           <div className="p-3 bg-gray-50 rounded">
                             <p className="text-sm font-medium text-gray-700">Description</p>
-                            <p className="text-sm">{link.metaDescription || 'N/A'}</p>
+                            <p className="text-sm text-gray-900">{link.metaDescription || 'N/A'}</p>
                           </div>
                         </div>
                         
@@ -229,7 +229,7 @@ Content: ${link.scrapedContent || 'N/A'}
                             <p className="text-sm font-medium text-gray-700 mb-1">Content Preview</p>
                             <div className="text-xs p-3 bg-gray-50 rounded max-h-32 overflow-y-auto">
                               {link.scrapedContent ? (
-                                <p className="whitespace-pre-wrap">{link.scrapedContent}</p>
+                                <p className="whitespace-pre-wrap text-gray-900">{link.scrapedContent}</p>
                               ) : (
                                 <p className="text-gray-500 italic">No content available</p>
                               )}

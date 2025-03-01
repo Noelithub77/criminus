@@ -1,8 +1,4 @@
 import { NextResponse } from 'next/server';
-import { Builder, By, until } from 'selenium-webdriver';
-import chrome from 'selenium-webdriver/chrome';
-import cheerio from 'cheerio';
-import axios from 'axios';
 
 /**
  * Extract URLs from a text message
@@ -15,40 +11,32 @@ function extractUrls(message) {
 }
 
 /**
- * Scrape a website using Selenium (server-side only)
- * @param {string} url - The URL to scrape
- * @returns {Promise<Object>} - Object containing scraped data
+ * Analyze a website using HTTP requests (without Selenium)
+ * @param {string} url - The URL to analyze
+ * @returns {Promise<Object>} - Object containing analyzed data
  */
-async function scrapeWebsite(url) {
+async function analyzeWebsite(url) {
   // For safety, we'll use a timeout to prevent hanging
-  const TIMEOUT = 15000; // 15 seconds
+  const TIMEOUT = 10000; // 10 seconds
   
-  let driver;
   try {
-    // Set up Chrome options for headless mode
-    const options = new chrome.Options();
-    options.addArguments('--headless');
-    options.addArguments('--disable-gpu');
-    options.addArguments('--no-sandbox');
-    options.addArguments('--disable-dev-shm-usage');
+    // Import axios dynamically
+    const { default: axios } = await import('axios');
     
-    // Build the driver
-    driver = await new Builder()
-      .forBrowser('chrome')
-      .setChromeOptions(options)
-      .build();
+    // Make the HTTP request
+    const response = await axios.get(url, { 
+      timeout: TIMEOUT,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+      }
+    });
     
-    // Navigate to the URL
-    await driver.get(url);
-    
-    // Wait for the page to load (wait for body)
-    await driver.wait(until.elementLocated(By.css('body')), TIMEOUT);
-    
-    // Get page source
-    const pageSource = await driver.getPageSource();
+    // Import cheerio dynamically
+    const cheerioModule = await import('cheerio');
+    const cheerio = cheerioModule.default || cheerioModule;
     
     // Parse with Cheerio
-    const $ = cheerio.load(pageSource);
+    const $ = cheerio.load(response.data);
     
     // Extract useful information
     const title = $('title').text();
@@ -79,38 +67,17 @@ async function scrapeWebsite(url) {
       scrapedContent: paragraphs.join(' ').substring(0, 1000) // Limit content size
     };
   } catch (error) {
-    console.error(`Error scraping ${url}:`, error);
-    
-    // Fallback to simple HTTP request if Selenium fails
-    try {
-      const response = await axios.get(url, { timeout: TIMEOUT });
-      const $ = cheerio.load(response.data);
-      
-      return {
-        url,
-        title: $('title').text(),
-        metaDescription: $('meta[name="description"]').attr('content') || '',
-        paragraphs: $('p').map((i, el) => $(el).text()).get().slice(0, 5),
-        error: 'Selenium failed, using fallback HTTP request',
-        scrapedContent: $('body').text().substring(0, 1000) // Limit content size
-      };
-    } catch (fallbackError) {
-      return {
-        url,
-        error: 'Failed to scrape website',
-        errorDetails: fallbackError.message
-      };
-    }
-  } finally {
-    // Always quit the driver to clean up resources
-    if (driver) {
-      await driver.quit().catch(e => console.error('Error quitting driver:', e));
-    }
+    console.error(`Error analyzing ${url}:`, error);
+    return {
+      url,
+      error: 'Failed to analyze website',
+      errorDetails: error.message
+    };
   }
 }
 
 /**
- * Analyze links in a message and scrape their content (server-side)
+ * Analyze links in a message
  * @param {string} message - The message containing URLs to analyze
  * @returns {Promise<Object>} - Analysis results
  */
@@ -130,8 +97,8 @@ async function analyzeLinkContent(message) {
   
   for (const url of linksToProcess) {
     try {
-      const scrapedData = await scrapeWebsite(url);
-      results.push(scrapedData);
+      const analyzedData = await analyzeWebsite(url);
+      results.push(analyzedData);
     } catch (error) {
       results.push({
         url,

@@ -29,7 +29,24 @@ async function analyzeLinkContent(message) {
   try {
     // Call the server-side API to analyze links
     const response = await axios.post('/api/analyze-links', { message });
-    return response.data;
+    
+    // If the API call was successful, return the data
+    if (response.data) {
+      return response.data;
+    }
+    
+    // Fallback if API response is empty
+    return {
+      foundLinks: true,
+      processedLinks: urls.map(url => ({
+        url,
+        title: 'Could not retrieve title',
+        metaDescription: 'Could not retrieve description',
+        error: 'Empty API response'
+      })),
+      allLinks: urls,
+      additionalInfo: 'API returned empty response'
+    };
   } catch (error) {
     console.error('Error calling link analysis API:', error);
     
@@ -39,7 +56,7 @@ async function analyzeLinkContent(message) {
       processedLinks: urls.map(url => ({
         url,
         error: 'Failed to analyze link via API',
-        errorDetails: error.message
+        errorDetails: error.message || 'Unknown error'
       })),
       allLinks: urls,
       additionalInfo: 'Link analysis API failed'
