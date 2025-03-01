@@ -1,8 +1,21 @@
 import React, { useState, useRef, useEffect } from "react";
-import { ArrowUpCircle, Search } from "react-feather";
+import { ArrowUpCircle, Search, Info, X, MessageSquare } from "react-feather";
 import { useResponsive } from "../hooks/useResponsive";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import ReactMarkdown from 'react-markdown';
+import mermaid from 'mermaid';
+// Import CSS
+import './LeadPrediction.css';
+
+// Initialize mermaid
+if (typeof window !== 'undefined') {
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    securityLevel: 'loose',
+    fontFamily: 'Inter, sans-serif',
+  });
+}
 
 const LeadPrediction = () => {
   const [isFocused, setIsFocused] = useState(false);
@@ -20,9 +33,29 @@ const LeadPrediction = () => {
   const [streamingMessage, setStreamingMessage] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const messagesEndRef = useRef(null);
+  const [showQuickPrompts, setShowQuickPrompts] = useState(true);
 
   // Initialize model ref to avoid re-creation on each render
   const modelRef = useRef(null);
+
+  // Quick prompts for structured responses
+  const quickPrompts = [
+    {
+      title: "Deepfake Fraud Investigation",
+      prompt: "How do you approach a deepfake fraud case?",
+      description: "Get a workflow diagram for investigating deepfake fraud"
+    },
+    {
+      title: "Phishing Analysis",
+      prompt: "What's the process for analyzing a phishing campaign?",
+      description: "View structured analysis steps for phishing"
+    },
+    {
+      title: "Cryptocurrency Scam",
+      prompt: "How to investigate a cryptocurrency scam?",
+      description: "See investigation workflow for crypto scams"
+    }
+  ];
 
   const suggestedInputs = [
     "Analyze this suspicious text message for potential scam indicators",
@@ -83,6 +116,15 @@ const LeadPrediction = () => {
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, streamingMessage]);
+
+  // Process Mermaid diagrams after rendering
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setTimeout(() => {
+        mermaid.init('.mermaid');
+      }, 200);
     }
   }, [messages, streamingMessage]);
 
@@ -161,8 +203,43 @@ const LeadPrediction = () => {
     }
   };
 
+  const handleQuickPromptClick = (prompt) => {
+    setInputText(prompt);
+    handleSubmit(new Event('submit'));
+  };
+
+  // Custom renderer for Mermaid diagrams and other structured content
   const renderMessageContent = (content) => {
-    return <ReactMarkdown>{content}</ReactMarkdown>;
+    // Process content to identify and handle Mermaid diagrams
+    const processedContent = content.replace(
+      /```mermaid\n([\s\S]*?)```/g,
+      (match, diagramCode) => {
+        return `<div class="mermaid-container"><div class="mermaid">${diagramCode}</div></div>`;
+      }
+    );
+
+    return (
+      <div className="markdown-content">
+        <ReactMarkdown 
+          children={processedContent}
+          components={{
+            div: ({ node, className, children, ...props }) => {
+              if (className === 'mermaid-container') {
+                return <div className="mermaid-container" {...props} dangerouslySetInnerHTML={{ __html: children }} />;
+              }
+              return <div className={className} {...props}>{children}</div>;
+            },
+            table: ({ node, ...props }) => (
+              <div className="table-container">
+                <table className="structured-table" {...props} />
+              </div>
+            ),
+            th: ({ node, ...props }) => <th className="table-header" {...props} />,
+            td: ({ node, ...props }) => <td className="table-cell" {...props} />,
+          }}
+        />
+      </div>
+    );
   };
 
   const handleSubmit = async (e) => {
@@ -178,15 +255,26 @@ const LeadPrediction = () => {
         setIsLoading(true);
         setIsStreaming(true);
         setStreamingMessage("");
+        setShowQuickPrompts(false);
         
         if (!modelRef.current) {
           throw new Error("Model not initialized");
         }
         
-        // Prepare system message for lead prediction context
+        // Prepare system message for lead prediction context with structured output instructions
         const systemMessage = {
           role: "system",
-          content: "You are J.Ethical Lead Predictor, an AI assistant specialized in analyzing text for potential criminal patterns, scams, threats, and generating investigative leads for law enforcement. Provide detailed analysis and actionable next steps for investigators."
+          content: `You are J.Ethical Lead Predictor, an AI assistant specialized in analyzing text for potential criminal patterns, scams, threats, and generating investigative leads for law enforcement. 
+          
+          Provide detailed analysis and actionable next steps for investigators.
+          
+          When appropriate, use structured formats:
+          1. For workflows or processes, use Mermaid diagrams (syntax: \`\`\`mermaid flowchart TD or graph TD\`\`\`)
+          2. For data comparisons, use markdown tables
+          3. For step-by-step procedures, use numbered lists
+          4. For key findings, use bullet points
+          
+          If the user asks about investigation workflows, case approaches, or methodologies, ALWAYS include a Mermaid diagram to visualize the process.`
         };
         
         // Stream response
@@ -229,593 +317,208 @@ const LeadPrediction = () => {
 
   return (
     <div className="lead-prediction-page">
-      <a href="#input-form" className="skip-to-content">
-        Skip to input form
-      </a>
-      
       <div className={`lead-prediction-container ${isDesktop || isLargeDesktop ? 'desktop-layout' : ''}`}>
-        <h2 className="lead-prediction-title">
-          <Search size={24} style={{ marginRight: '8px' }} />
-          Lead Prediction
-        </h2>
+        <header className="lead-prediction-header">
+          <h2 className="lead-prediction-title">
+            <Search size={24} style={{ marginRight: '8px' }} />
+            Lead Prediction
+          </h2>
+          <button 
+            className="info-button"
+            onClick={() => setShowQuickPrompts(!showQuickPrompts)}
+            aria-label={showQuickPrompts ? "Hide quick prompts" : "Show quick prompts"}
+          >
+            {showQuickPrompts ? <X size={20} /> : <Info size={20} />}
+          </button>
+        </header>
         
-        {messages.length === 0 && (
-          <div className="user-manual">
-            <h3>User Manual</h3>
-            <ol>
-              <li>Copy the suspicious text or link from any source</li>
-              <li>Paste the copied text or link into the input box.</li>
-              <li>Tap "Analyze" to generate potential leads.</li>
-            </ol>
-          </div>
-        )}
-        
-        {messages.length === 0 && (
-          <div className={`suggested-inputs ${isFocused ? 'minimized' : ''}`}>
-            <h3 className="suggested-inputs-title">Suggested Inputs</h3>
-            {suggestedInputs.map((input, index) => (
-              <div 
-                key={index} 
-                className="input-item"
-                onClick={() => handleSuggestedInputClick(input)}
-                tabIndex={0}
-                role="button"
-                aria-label={`Use input: ${input}`}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    handleSuggestedInputClick(input);
-                  }
-                }}
-              >
-                <div className="input-item-icon">
-                  <Search size={16} />
+        <div className="content-container">
+          {/* Main chat area */}
+          <div className="chat-container">
+            {messages.length === 0 ? (
+              <div className="welcome-container">
+                <div className="user-manual">
+                  <h3>Lead Prediction Tool</h3>
+                  <p>Analyze suspicious content and generate investigative leads</p>
+                  <ol>
+                    <li>Copy the suspicious text or link from any source</li>
+                    <li>Paste the copied text or link into the input box</li>
+                    <li>Tap "Analyze" to generate potential leads</li>
+                  </ol>
                 </div>
-                <span className="input-item-text">{input}</span>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {messages.length === 0 && (
-          <div className={`mascot-container ${isFocused ? 'minimized' : ''}`}>
-            <div className="mascot">
-              <div className="mascot-image-container">
-                <div className="lead-predictor-mascot"></div>
-              </div>
-              <div className="mascot-name">Lead Predictor</div>
-            </div>
-          </div>
-        )}
-        
-        {/* Chat messages */}
-        {messages.length > 0 && (
-          <div className="lead-prediction-messages">
-            {messages.map((message, index) => (
-              <div 
-                key={index} 
-                className={`message ${message.role === 'user' ? 'user-message' : 'ai-message'}`}
-              >
-                <div className="message-avatar">
-                  {message.role === 'user' ? '👮' : '🔍'}
-                </div>
-                <div className="message-content">
-                  {renderMessageContent(message.content)}
-                </div>
-              </div>
-            ))}
-            {isStreaming && streamingMessage && (
-              <div className="message ai-message">
-                <div className="message-avatar">🔍</div>
-                <div className="message-content">
-                  {renderMessageContent(streamingMessage)}
-                </div>
-              </div>
-            )}
-            {isLoading && !streamingMessage && (
-              <div className="message ai-message">
-                <div className="message-avatar">🔍</div>
-                <div className="message-content">
-                  <div className="typing-indicator">
-                    <span></span>
-                    <span></span>
-                    <span></span>
+                
+                {showQuickPrompts && (
+                  <div className="quick-prompts">
+                    <h3>Try Structured Analysis</h3>
+                    <div className="quick-prompts-grid">
+                      {quickPrompts.map((item, index) => (
+                        <div 
+                          key={index} 
+                          className="quick-prompt-card"
+                          onClick={() => handleQuickPromptClick(item.prompt)}
+                        >
+                          <h4>{item.title}</h4>
+                          <p>{item.description}</p>
+                          <div className="prompt-icon">
+                            <MessageSquare size={16} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
+              </div>
+            ) : (
+              <div className="lead-prediction-messages">
+                {messages.map((message, index) => (
+                  <div 
+                    key={index} 
+                    className={`message ${message.role === 'user' ? 'user-message' : 'ai-message'}`}
+                  >
+                    <div className="message-avatar">
+                      {message.role === 'user' ? '👮' : '🔍'}
+                    </div>
+                    <div className="message-content">
+                      {renderMessageContent(message.content)}
+                    </div>
+                  </div>
+                ))}
+                {isStreaming && streamingMessage && (
+                  <div className="message ai-message">
+                    <div className="message-avatar">🔍</div>
+                    <div className="message-content">
+                      {renderMessageContent(streamingMessage)}
+                    </div>
+                  </div>
+                )}
+                {isLoading && !streamingMessage && (
+                  <div className="message ai-message">
+                    <div className="message-avatar">🔍</div>
+                    <div className="message-content">
+                      <div className="typing-indicator">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <div ref={messagesEndRef} />
               </div>
             )}
-            <div ref={messagesEndRef} />
           </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="input-form" id="input-form">
-          <div
-            className={`input-wrapper ${isFocused ? "active" : ""}`}
-            ref={inputContainerRef}
-            style={{
-              "--mouse-x": `${mousePosition.x}px`,
-              "--mouse-y": `${mousePosition.y}px`,
-            }}
-          >
-            <div className="liquid-glow"></div>
-            <div className="input-bar">
-              <div className="input-icon">
-                <Search size={20} />
+          
+          {/* Side panel for suggestions (desktop only) */}
+          {(isDesktop || isLargeDesktop) && showQuickPrompts && messages.length > 0 && (
+            <div className="side-panel">
+              <div className="suggested-inputs">
+                <h3 className="suggested-inputs-title">Suggested Inputs</h3>
+                {suggestedInputs.map((input, index) => (
+                  <div 
+                    key={index} 
+                    className="input-item"
+                    onClick={() => handleSuggestedInputClick(input)}
+                    tabIndex={0}
+                    role="button"
+                    aria-label={`Use input: ${input}`}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        handleSuggestedInputClick(input);
+                      }
+                    }}
+                  >
+                    <div className="input-item-icon">
+                      <Search size={16} />
+                    </div>
+                    <span className="input-item-text">{input}</span>
+                  </div>
+                ))}
               </div>
-              <input
-                type="text"
-                placeholder={isMobile ? "Enter text to analyze..." : "Paste suspicious text, messages, or content for analysis"}
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                onFocus={handleFocus}
-                onBlur={handleBlur}
-                onKeyDown={handleKeyDown}
-                className="lead-input"
-                ref={inputRef}
-                aria-label="Lead analysis input"
-                aria-autocomplete="list"
-                aria-controls="input-suggestions"
-                aria-expanded={isFocused && inputText ? "true" : "false"}
-                disabled={isLoading}
-              />
-              <button 
-                type="submit" 
-                className="analyze-button"
-                aria-label="Analyze text"
-                disabled={isLoading || !inputText.trim()}
-              >
-                <ArrowUpCircle />
-              </button>
             </div>
-          </div>
-        </form>
-
-        {isFocused && inputText && (
-          <div 
-            className="input-suggestions" 
-            ref={suggestionsRef}
-            id="input-suggestions"
-            role="listbox"
-          >
-            <h3 className="suggestions-title">Suggested Analysis</h3>
-            <div className="suggestions-list">
-              {suggestions.map((suggestion, index) => (
-                <div 
-                  key={index} 
-                  className={`suggestion-item ${selectedSuggestion === index ? 'selected' : ''}`}
-                  onClick={() => handleSuggestionClick(suggestion)}
-                  onMouseEnter={() => setSelectedSuggestion(index)}
-                  tabIndex={0}
-                  role="option"
-                  aria-selected={selectedSuggestion === index}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      handleSuggestionClick(suggestion);
-                    }
-                  }}
+          )}
+        </div>
+        
+        {/* Fixed input form at the bottom */}
+        <div className="fixed-input-container">
+          <form onSubmit={handleSubmit} className="input-form" id="input-form">
+            <div
+              className={`input-wrapper ${isFocused ? "active" : ""}`}
+              ref={inputContainerRef}
+              style={{
+                "--mouse-x": `${mousePosition.x}px`,
+                "--mouse-y": `${mousePosition.y}px`,
+              }}
+            >
+              <div className="liquid-glow"></div>
+              <div className="input-bar">
+                <div className="input-icon">
+                  <Search size={20} />
+                </div>
+                <input
+                  type="text"
+                  placeholder={isMobile ? "Enter text to analyze..." : "Paste suspicious text, messages, or content for analysis"}
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                  onFocus={handleFocus}
+                  onBlur={handleBlur}
+                  onKeyDown={handleKeyDown}
+                  className="lead-input"
+                  ref={inputRef}
+                  aria-label="Lead analysis input"
+                  aria-autocomplete="list"
+                  aria-controls="input-suggestions"
+                  aria-expanded={isFocused && inputText ? "true" : "false"}
+                  disabled={isLoading}
+                />
+                <button 
+                  type="submit" 
+                  className="analyze-button"
+                  aria-label="Analyze text"
+                  disabled={isLoading || !inputText.trim()}
                 >
-                  <div className="suggestion-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </div>
-                  <span className="suggestion-text">{suggestion}</span>
-                </div>
-              ))}
+                  <ArrowUpCircle />
+                </button>
+              </div>
             </div>
-          </div>
-        )}
+          </form>
+
+          {isFocused && inputText && (
+            <div 
+              className="input-suggestions" 
+              ref={suggestionsRef}
+              id="input-suggestions"
+              role="listbox"
+            >
+              <h3 className="suggestions-title">Suggested Analysis</h3>
+              <div className="suggestions-list">
+                {suggestions.map((suggestion, index) => (
+                  <div 
+                    key={index} 
+                    className={`suggestion-item ${selectedSuggestion === index ? 'selected' : ''}`}
+                    onClick={() => handleSuggestionClick(suggestion)}
+                    onMouseEnter={() => setSelectedSuggestion(index)}
+                    tabIndex={0}
+                    role="option"
+                    aria-selected={selectedSuggestion === index}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        handleSuggestionClick(suggestion);
+                      }
+                    }}
+                  >
+                    <div className="suggestion-icon">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </div>
+                    <span className="suggestion-text">{suggestion}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
-      
-      <style jsx>{`
-        .lead-prediction-page {
-          width: 100%;
-          max-width: 1200px;
-          margin: 0 auto;
-          padding: 16px;
-        }
-        
-        .lead-prediction-container {
-          display: flex;
-          flex-direction: column;
-          gap: 24px;
-        }
-        
-        .lead-prediction-title {
-          display: flex;
-          align-items: center;
-          font-size: 1.8rem;
-          font-weight: 600;
-          margin-bottom: 16px;
-          color: #e0e0e0;
-        }
-        
-        .user-manual {
-          background: rgba(255, 255, 255, 0.05);
-          border-radius: 12px;
-          padding: 16px;
-          margin-bottom: 24px;
-          backdrop-filter: blur(10px);
-        }
-        
-        .user-manual h3 {
-          font-size: 1.2rem;
-          margin-bottom: 12px;
-          color: #e0e0e0;
-        }
-        
-        .user-manual ol {
-          padding-left: 24px;
-          margin: 0;
-        }
-        
-        .user-manual li {
-          margin-bottom: 8px;
-          color: #b0b0b0;
-        }
-        
-        .suggested-inputs {
-          background: rgba(255, 255, 255, 0.05);
-          border-radius: 12px;
-          padding: 16px;
-          margin-bottom: 24px;
-          transition: all 0.3s ease;
-        }
-        
-        .suggested-inputs.minimized {
-          max-height: 0;
-          padding: 0;
-          overflow: hidden;
-          margin: 0;
-        }
-        
-        .suggested-inputs-title {
-          font-size: 1.1rem;
-          margin-bottom: 12px;
-          color: #e0e0e0;
-        }
-        
-        .input-item {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          padding: 12px;
-          border-radius: 8px;
-          cursor: pointer;
-          transition: background-color 0.2s ease;
-        }
-        
-        .input-item:hover {
-          background-color: rgba(255, 255, 255, 0.1);
-        }
-        
-        .input-item-icon {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 32px;
-          height: 32px;
-          border-radius: 50%;
-          background-color: rgba(255, 255, 255, 0.1);
-          color: #e0e0e0;
-        }
-        
-        .input-item-text {
-          color: #b0b0b0;
-        }
-        
-        .mascot-container {
-          display: flex;
-          justify-content: center;
-          margin: 32px 0;
-          transition: all 0.3s ease;
-        }
-        
-        .mascot-container.minimized {
-          max-height: 0;
-          margin: 0;
-          overflow: hidden;
-        }
-        
-        .mascot {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 16px;
-        }
-        
-        .mascot-image-container {
-          width: 180px;
-          height: 180px;
-          border-radius: 50%;
-          background-color: rgba(255, 255, 255, 0.05);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          overflow: hidden;
-        }
-        
-        .lead-predictor-mascot {
-          width: 100%;
-          height: 100%;
-          background-image: url('/lead-predictor-mascot.png');
-          background-size: contain;
-          background-position: center;
-          background-repeat: no-repeat;
-        }
-        
-        .mascot-name {
-          font-size: 1.2rem;
-          font-weight: 600;
-          color: #e0e0e0;
-        }
-        
-        .lead-prediction-messages {
-          display: flex;
-          flex-direction: column;
-          gap: 16px;
-          margin-bottom: 24px;
-          max-height: 60vh;
-          overflow-y: auto;
-          padding: 16px;
-          border-radius: 12px;
-          background-color: rgba(255, 255, 255, 0.05);
-          backdrop-filter: blur(10px);
-        }
-        
-        .message {
-          display: flex;
-          gap: 12px;
-          max-width: 80%;
-          animation: fadeIn 0.3s ease-out;
-        }
-        
-        .user-message {
-          align-self: flex-end;
-          flex-direction: row-reverse;
-        }
-        
-        .ai-message {
-          align-self: flex-start;
-        }
-        
-        .message-avatar {
-          width: 36px;
-          height: 36px;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background-color: rgba(255, 255, 255, 0.1);
-          font-size: 18px;
-        }
-        
-        .message-content {
-          padding: 12px 16px;
-          border-radius: 18px;
-          background-color: rgba(255, 255, 255, 0.1);
-          backdrop-filter: blur(5px);
-          line-height: 1.5;
-        }
-        
-        .user-message .message-content {
-          background-color: rgba(59, 130, 246, 0.2);
-          border-bottom-right-radius: 4px;
-        }
-        
-        .ai-message .message-content {
-          background-color: rgba(255, 255, 255, 0.15);
-          border-bottom-left-radius: 4px;
-        }
-        
-        .typing-indicator {
-          display: flex;
-          gap: 4px;
-        }
-        
-        .typing-indicator span {
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-          background-color: rgba(255, 255, 255, 0.6);
-          animation: bounce 1.5s infinite;
-        }
-        
-        .typing-indicator span:nth-child(2) {
-          animation-delay: 0.2s;
-        }
-        
-        .typing-indicator span:nth-child(3) {
-          animation-delay: 0.4s;
-        }
-        
-        .input-form {
-          width: 100%;
-          margin-bottom: 16px;
-        }
-        
-        .input-wrapper {
-          position: relative;
-          border-radius: 24px;
-          background-color: rgba(255, 255, 255, 0.05);
-          backdrop-filter: blur(10px);
-          overflow: hidden;
-          transition: all 0.3s ease;
-        }
-        
-        .input-wrapper.active {
-          box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
-        }
-        
-        .liquid-glow {
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          pointer-events: none;
-          z-index: 0;
-          opacity: 0;
-          transition: opacity 0.3s ease;
-          background: radial-gradient(
-            circle at var(--mouse-x) var(--mouse-y),
-            rgba(59, 130, 246, 0.15),
-            transparent 60%
-          );
-        }
-        
-        .input-wrapper.active .liquid-glow {
-          opacity: 1;
-        }
-        
-        .input-bar {
-          position: relative;
-          z-index: 1;
-          display: flex;
-          align-items: center;
-          padding: 8px 16px;
-        }
-        
-        .input-icon {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin-right: 12px;
-          color: #b0b0b0;
-        }
-        
-        .lead-input {
-          flex: 1;
-          background: transparent;
-          border: none;
-          outline: none;
-          color: #e0e0e0;
-          font-size: 1rem;
-          padding: 12px 0;
-        }
-        
-        .lead-input::placeholder {
-          color: #707070;
-        }
-        
-        .analyze-button {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: transparent;
-          border: none;
-          color: #3b82f6;
-          cursor: pointer;
-          padding: 8px;
-          transition: all 0.2s ease;
-        }
-        
-        .analyze-button:disabled {
-          color: #505050;
-          cursor: not-allowed;
-        }
-        
-        .analyze-button:not(:disabled):hover {
-          transform: scale(1.1);
-        }
-        
-        .input-suggestions {
-          background: rgba(30, 30, 30, 0.95);
-          border-radius: 12px;
-          padding: 16px;
-          margin-top: 8px;
-          max-height: 200px;
-          overflow-y: auto;
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-          backdrop-filter: blur(10px);
-          z-index: 10;
-        }
-        
-        .suggestions-title {
-          font-size: 0.9rem;
-          margin-bottom: 12px;
-          color: #b0b0b0;
-        }
-        
-        .suggestions-list {
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-        }
-        
-        .suggestion-item {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          padding: 10px 12px;
-          border-radius: 8px;
-          cursor: pointer;
-          transition: background-color 0.2s ease;
-        }
-        
-        .suggestion-item:hover, .suggestion-item.selected {
-          background-color: rgba(59, 130, 246, 0.2);
-        }
-        
-        .suggestion-icon {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: #3b82f6;
-        }
-        
-        .suggestion-text {
-          color: #d0d0d0;
-        }
-        
-        .skip-to-content {
-          position: absolute;
-          left: -9999px;
-          top: auto;
-          width: 1px;
-          height: 1px;
-          overflow: hidden;
-        }
-        
-        .skip-to-content:focus {
-          position: fixed;
-          top: 16px;
-          left: 16px;
-          width: auto;
-          height: auto;
-          padding: 16px;
-          background-color: #1a1a1a;
-          color: #ffffff;
-          z-index: 100;
-          border-radius: 4px;
-        }
-        
-        @keyframes bounce {
-          0%, 60%, 100% {
-            transform: translateY(0);
-          }
-          30% {
-            transform: translateY(-4px);
-          }
-        }
-        
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        
-        @media (min-width: 768px) {
-          .desktop-layout {
-            max-width: 800px;
-            margin: 0 auto;
-          }
-        }
-      `}</style>
     </div>
   );
 };
