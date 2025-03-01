@@ -16,7 +16,7 @@ export default function DispatchCall() {
   const [isListening, setIsListening] = useState(false);
   const [audioFile, setAudioFile] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [inputMode, setInputMode] = useState('speech'); // 'speech', 'text', or 'file'
+  const [inputMode, setInputMode] = useState('unified'); // Changed to 'unified' from 'speech'
   const [isRecordingAudio, setIsRecordingAudio] = useState(false);
   const [audioChunks, setAudioChunks] = useState([]);
   const [audioBlob, setAudioBlob] = useState(null);
@@ -24,12 +24,17 @@ export default function DispatchCall() {
   const [transcription, setTranscription] = useState('');
   const [textInput, setTextInput] = useState('');
   const [isProcessingText, setIsProcessingText] = useState(false);
+  const [showWaveform, setShowWaveform] = useState(false);
+  const [audioVisualization, setAudioVisualization] = useState([]);
   
   const recognitionRef = useRef(null);
   const conversationContainerRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const audioInputRef = useRef(null);
   const textInputRef = useRef(null);
+  const audioContextRef = useRef(null);
+  const analyserRef = useRef(null);
+  const animationFrameRef = useRef(null);
   
   // Initialize Gemini API
   const genAI = useRef(null);
@@ -49,8 +54,8 @@ export default function DispatchCall() {
     recognitionRef.current = initSpeechRecognition();
     
     if (recognitionRef.current) {
-      // Set continuous to false for faster processing of each utterance
-      recognitionRef.current.continuous = false;
+      // Set continuous to true for continuous recording
+      recognitionRef.current.continuous = true;
       recognitionRef.current.interimResults = true;
       
       recognitionRef.current.onresult = (event) => {
@@ -70,13 +75,11 @@ export default function DispatchCall() {
         setLiveTranscript(interimTranscript);
         
         if (finalTranscript) {
-          setTranscript(finalTranscript.trim());
+          setTranscript(prev => prev + finalTranscript.trim() + ' ');
           setLiveTranscript(''); // Clear interim transcript when final is available
           
-          // Auto-stop recording when we get a final result for faster processing
-          if (isListening && finalTranscript.trim()) {
-            stopRecording();
-          }
+          // Don't auto-stop recording to allow for continuous speech
+          // We'll let the user manually stop when they're done
         }
       };
       
@@ -117,7 +120,7 @@ export default function DispatchCall() {
     }
   }, [conversationHistory]);
   
-  // Initialize audio recording
+  // Initialize audio recording with visualization
   const startAudioRecording = () => {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       setError('Audio recording is not supported in this browser.');
@@ -127,8 +130,47 @@ export default function DispatchCall() {
     navigator.mediaDevices.getUserMedia({ audio: true })
       .then(stream => {
         setIsRecordingAudio(true);
+        setShowWaveform(true);
         const mediaRecorder = new MediaRecorder(stream);
         mediaRecorderRef.current = mediaRecorder;
+        
+        // Set up audio visualization
+        if (!audioContextRef.current) {
+          audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        
+        const audioContext = audioContextRef.current;
+        const analyser = audioContext.createAnalyser();
+        analyserRef.current = analyser;
+        
+        const source = audioContext.createMediaStreamSource(stream);
+        source.connect(analyser);
+        
+        analyser.fftSize = 256;
+        const bufferLength = analyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+        
+        const updateVisualization = () => {
+          if (!analyserRef.current) return;
+          
+          analyserRef.current.getByteFrequencyData(dataArray);
+          
+          // Create a simplified array for visualization (just 10 values)
+          const simplifiedArray = Array.from({length: 10}, (_, i) => {
+            const start = Math.floor(i * bufferLength / 10);
+            const end = Math.floor((i + 1) * bufferLength / 10);
+            let sum = 0;
+            for (let j = start; j < end; j++) {
+              sum += dataArray[j];
+            }
+            return Math.floor(sum / (end - start));
+          });
+          
+          setAudioVisualization(simplifiedArray);
+          animationFrameRef.current = requestAnimationFrame(updateVisualization);
+        };
+        
+        updateVisualization();
         
         const chunks = [];
         mediaRecorder.ondataavailable = (e) => {
@@ -142,6 +184,7 @@ export default function DispatchCall() {
           setAudioBlob(blob);
           setAudioChunks(chunks);
           setIsRecordingAudio(false);
+          setShowWaveform(false);
           
           // Create a file from the blob
           const file = new File([blob], "recording.mp3", { type: 'audio/mp3' });
@@ -149,6 +192,14 @@ export default function DispatchCall() {
           
           // Release the microphone
           stream.getTracks().forEach(track => track.stop());
+          
+          // Stop visualization
+          if (animationFrameRef.current) {
+            cancelAnimationFrame(animationFrameRef.current);
+          }
+          
+          // Process the audio file automatically
+          uploadAudio(file, transcript);
         };
         
         mediaRecorder.start();
@@ -174,8 +225,10 @@ export default function DispatchCall() {
     }
   };
   
-  const uploadAudio = async () => {
-    if (!audioFile) {
+  const uploadAudio = async (fileToUpload = null, transcriptText = '') => {
+    const fileToProcess = fileToUpload || audioFile;
+    
+    if (!fileToProcess) {
       setError('Please select or record an audio file first.');
       return;
     }
@@ -213,7 +266,7 @@ export default function DispatchCall() {
       });
       
       // Read the file as data URL
-      reader.readAsDataURL(audioFile);
+      reader.readAsDataURL(fileToProcess);
       
       // Wait for the file to be read
       const base64Data = await audioDataPromise;
@@ -235,13 +288,14 @@ export default function DispatchCall() {
 7. Provide first aid instructions if needed
 
 ${formattedHistory ? `Previous conversation:\n${formattedHistory}\n\n` : ''}
-The caller has sent an audio message. Please respond as if you are speaking to the caller directly. Keep your response brief, focused, and helpful. Do not include any prefixes like "Dispatch:" in your response.`;
+The caller has sent an audio message. ${transcriptText ? `The transcript is: "${transcriptText}"` : ''}
+Please respond as if you are speaking to the caller directly. Keep your response brief, focused, and helpful. Do not include any prefixes like "Dispatch:" in your response.`;
       
       // Create a part for the audio file
       const audioData = {
         inlineData: {
           data: base64Data,
-          mimeType: audioFile.type || "audio/mp3"
+          mimeType: fileToProcess.type || "audio/mp3"
         }
       };
       
@@ -318,10 +372,12 @@ The caller has sent an audio message. Please respond as if you are speaking to t
   };
   
   const startRecording = () => {
+    // In unified mode, we start both speech recognition and audio recording
     setIsRecording(true);
     setTranscript('');
     setError('');
     setIsListening(true);
+    setShowWaveform(true);
     
     if (recognitionRef.current) {
       try {
@@ -330,10 +386,14 @@ The caller has sent an audio message. Please respond as if you are speaking to t
         console.error('Error starting recognition:', err);
       }
     }
+    
+    // Also start audio recording for sending to Gemini
+    startAudioRecording();
   };
   
   const stopRecording = async () => {
     setIsListening(false);
+    setShowWaveform(false);
     
     if (recognitionRef.current) {
       try {
@@ -345,16 +405,17 @@ The caller has sent an audio message. Please respond as if you are speaking to t
     
     setIsRecording(false);
     
-    if (transcript.trim()) {
-      // Add user message to conversation history
-      const userMessage = { role: 'user', content: transcript };
-      setConversationHistory(prev => [...prev, userMessage]);
-      
-      await processTranscript();
-      
-      // Clear transcript for next recording
-      setTranscript('');
+    // Stop audio recording
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      mediaRecorderRef.current.stop();
     }
+    
+    // Stop visualization
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+    }
+    
+    // We don't need to process transcript here as it will be handled by the audio recording stop event
   };
   
   const processTranscript = async () => {
@@ -447,7 +508,7 @@ Respond as if you are speaking to the caller directly. Keep your response brief,
       
       // Speak the greeting and start recording when done
       speakText(initialGreeting, () => {
-        if (inputMode === 'speech') {
+        if (inputMode === 'unified') {
           startRecording();
         }
       }, () => {
@@ -457,31 +518,13 @@ Respond as if you are speaking to the caller directly. Keep your response brief,
   };
   
   const endCall = () => {
-    if (inputMode === 'speech') {
+    if (inputMode === 'unified') {
       stopRecording();
     } else if (isRecordingAudio) {
       stopAudioRecording();
     }
     setCallStatus('ended');
     stopSpeaking();
-  };
-  
-  const toggleInputMode = () => {
-    // Stop current input method
-    if (inputMode === 'speech' && isRecording) {
-      stopRecording();
-    } else if (inputMode === 'file' && isRecordingAudio) {
-      stopAudioRecording();
-    }
-    
-    // Toggle mode in a cycle: speech -> text -> file -> speech
-    if (inputMode === 'speech') {
-      setInputMode('text');
-    } else if (inputMode === 'text') {
-      setInputMode('file');
-    } else {
-      setInputMode('speech');
-    }
   };
   
   const handleTextSubmit = async (e) => {
@@ -589,14 +632,10 @@ Respond as if you are speaking to the caller directly. Keep your response brief,
             <div className="flex items-center gap-2">
               {callStatus === 'connected' && (
                 <button 
-                  onClick={toggleInputMode}
+                  onClick={() => setInputMode(inputMode === 'unified' ? 'text' : 'unified')}
                   className="text-xs px-2 py-1 bg-blue-700 rounded-full hover:bg-blue-800"
                 >
-                  {inputMode === 'speech' 
-                    ? 'Switch to Text' 
-                    : inputMode === 'text' 
-                      ? 'Switch to Audio Upload' 
-                      : 'Switch to Speech'}
+                  {inputMode === 'unified' ? 'Switch to Text' : 'Switch to Voice'}
                 </button>
               )}
               <div className="text-sm font-medium">
@@ -658,18 +697,62 @@ Respond as if you are speaking to the caller directly. Keep your response brief,
               </>
             )}
             
-            {isRecording && liveTranscript && (
+            {/* Enhanced recording visualization */}
+            {showWaveform && (
               <div className="bg-blue-50 p-3 rounded-lg max-w-[85%] ml-auto border border-blue-100 text-blue-800">
                 <div className="flex items-center gap-2 mb-1">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                  <p className="text-xs font-medium text-blue-500">Listening...</p>
+                  <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                  <p className="text-xs font-medium text-blue-500">Recording...</p>
                 </div>
-                <p className="text-sm">{typeof liveTranscript === 'function' ? 'Processing speech...' : liveTranscript}</p>
+                
+                {/* Audio waveform visualization */}
+                <div className="flex items-center justify-center h-12 mb-2">
+                  {audioVisualization.length > 0 ? (
+                    <div className="flex items-center justify-center gap-1 h-full w-full">
+                      {audioVisualization.map((value, i) => (
+                        <div 
+                          key={i}
+                          className="bg-blue-500 rounded-full w-1"
+                          style={{ 
+                            height: `${Math.max(15, value / 2)}%`,
+                            animation: 'pulse 1s infinite',
+                            animationDelay: `${i * 0.1}s`
+                          }}
+                        ></div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center gap-1 h-full w-full">
+                      {[...Array(10)].map((_, i) => (
+                        <div 
+                          key={i}
+                          className="bg-blue-500 rounded-full w-1"
+                          style={{ 
+                            height: `${20 + Math.random() * 60}%`,
+                            animation: 'pulse 1s infinite',
+                            animationDelay: `${i * 0.1}s`
+                          }}
+                        ></div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                
+                {/* Live transcript */}
+                <div className="text-sm font-medium">
+                  {transcript && <p className="mb-1">{transcript}</p>}
+                  {liveTranscript && (
+                    <p className="text-blue-400 italic">{liveTranscript}</p>
+                  )}
+                  {!transcript && !liveTranscript && (
+                    <p className="text-blue-400 italic">Speak now...</p>
+                  )}
+                </div>
               </div>
             )}
             
             {isSpeaking && (
-              <div className="p-3 rounded-lg bg-gray-700 mr-auto max-w-[80%] opacity-70">
+              <div className="p-3 rounded-lg bg-gray-700 mr-auto max-w-[80%] text-white">
                 <div className="flex items-center">
                   <div className="mr-2">Dispatch speaking</div>
                   <div className="flex space-x-1">
@@ -735,99 +818,6 @@ Respond as if you are speaking to the caller directly. Keep your response brief,
             </div>
           )}
           
-          {/* Input area for audio file mode */}
-          {inputMode === 'file' && callStatus === 'connected' && (
-            <div className="p-3 bg-gray-50 border-t border-gray-200">
-              <div className="flex flex-col gap-2">
-                {!audioFile ? (
-                  <>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={startAudioRecording}
-                        disabled={isRecordingAudio || isUploading}
-                        className="flex-1 py-2 px-3 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50 flex items-center justify-center gap-2"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" />
-                        </svg>
-                        Record Audio
-                      </button>
-                      <label className="flex-1 py-2 px-3 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 cursor-pointer flex items-center justify-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
-                        </svg>
-                        Upload Audio
-                        <input
-                          type="file"
-                          accept="audio/*"
-                          onChange={handleFileChange}
-                          className="hidden"
-                          ref={audioInputRef}
-                        />
-                      </label>
-                    </div>
-                    {isRecordingAudio && (
-                      <div className="flex justify-center">
-                        <button
-                          onClick={stopAudioRecording}
-                          className="py-2 px-4 bg-red-500 text-white rounded-md hover:bg-red-600 flex items-center gap-2"
-                        >
-                          <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
-                          Stop Recording
-                        </button>
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <div className="flex flex-col gap-2">
-                    <div className="flex items-center justify-between bg-blue-50 p-2 rounded-md border border-blue-100">
-                      <div className="flex items-center gap-2 text-blue-800">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z" />
-                        </svg>
-                        <span className="text-sm font-medium truncate max-w-[150px]">
-                          {audioFile.name || "Recording.mp3"}
-                        </span>
-                      </div>
-                      <button
-                        onClick={() => {
-                          setAudioFile(null);
-                          if (audioInputRef.current) {
-                            audioInputRef.current.value = '';
-                          }
-                        }}
-                        className="text-red-500 hover:text-red-700"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    </div>
-                    <button
-                      onClick={uploadAudio}
-                      disabled={isUploading}
-                      className="py-2 px-4 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50 flex items-center justify-center gap-2"
-                    >
-                      {isUploading ? (
-                        <>
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                          Processing...
-                        </>
-                      ) : (
-                        <>
-                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
-                          </svg>
-                          Send Audio
-                        </>
-                      )}
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-          
           {/* Call controls */}
           <div className="bg-gray-100 p-4 flex justify-center items-center gap-6 border-t border-gray-200">
             {callStatus === 'idle' && (
@@ -852,23 +842,27 @@ Respond as if you are speaking to the caller directly. Keep your response brief,
                   </svg>
                 </button>
                 
-                {inputMode === 'speech' && !isRecording && !isProcessing && callStatus === 'connected' && (
+                {inputMode === 'unified' && !isRecording && !isProcessing && callStatus === 'connected' && (
                   <button
                     onClick={startRecording}
-                    className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white hover:bg-blue-600 shadow-md"
+                    className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center text-white hover:bg-blue-600 shadow-md relative overflow-hidden group"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                    {/* Pulsing circle animation */}
+                    <div className="absolute inset-0 bg-blue-400 opacity-50 rounded-full scale-0 group-hover:scale-100 transition-transform duration-700"></div>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8 relative z-10">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" />
                     </svg>
                   </button>
                 )}
                 
-                {inputMode === 'speech' && isRecording && (
+                {inputMode === 'unified' && isRecording && (
                   <button
                     onClick={stopRecording}
-                    className="w-12 h-12 bg-yellow-500 rounded-full flex items-center justify-center text-white hover:bg-yellow-600 shadow-md"
+                    className="w-16 h-16 bg-yellow-500 rounded-full flex items-center justify-center text-white hover:bg-yellow-600 shadow-md relative overflow-hidden"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                    {/* Recording animation */}
+                    <div className="absolute inset-0 bg-yellow-400 opacity-30 rounded-full animate-ping"></div>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8 relative z-10">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 7.5A2.25 2.25 0 0 1 7.5 5.25h9a2.25 2.25 0 0 1 2.25 2.25v9a2.25 2.25 0 0 1-2.25 2.25h-9a2.25 2.25 0 0 1-2.25-2.25v-9Z" />
                     </svg>
                   </button>
@@ -887,6 +881,15 @@ Respond as if you are speaking to the caller directly. Keep your response brief,
           </div>
         </div>
       </div>
+      
+      {/* Add CSS for animations */}
+      <style jsx>{`
+        @keyframes pulse {
+          0% { transform: scaleY(0.7); }
+          50% { transform: scaleY(1); }
+          100% { transform: scaleY(0.7); }
+        }
+      `}</style>
     </div>
   );
 } 
