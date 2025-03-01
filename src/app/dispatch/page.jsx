@@ -6,6 +6,7 @@ import { initSpeechRecognition, speakText, stopSpeaking } from '../../utils/spee
 export default function DispatchCall() {
   const [isRecording, setIsRecording] = useState(false);
   const [transcript, setTranscript] = useState('');
+  const [liveTranscript, setLiveTranscript] = useState('');
   const [aiResponse, setAiResponse] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [callStatus, setCallStatus] = useState('idle'); // idle, calling, connected, ended
@@ -18,6 +19,8 @@ export default function DispatchCall() {
   const [isRecordingAudio, setIsRecordingAudio] = useState(false);
   const [audioChunks, setAudioChunks] = useState([]);
   const [audioBlob, setAudioBlob] = useState(null);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [transcription, setTranscription] = useState('');
   
   const recognitionRef = useRef(null);
   const conversationContainerRef = useRef(null);
@@ -42,8 +45,12 @@ export default function DispatchCall() {
           }
         }
         
+        // Update live transcript for display
+        setLiveTranscript(interimTranscript);
+        
         if (finalTranscript) {
           setTranscript(prevTranscript => prevTranscript + finalTranscript);
+          setLiveTranscript(''); // Clear interim transcript when final is available
         }
       };
       
@@ -145,6 +152,8 @@ export default function DispatchCall() {
     
     try {
       setIsUploading(true);
+      setTranscription('Processing audio...');
+      setError(''); // Clear any previous errors
       
       // Create a FormData object to send the file
       const formData = new FormData();
@@ -153,20 +162,39 @@ export default function DispatchCall() {
       // Add conversation history to the form data
       formData.append('conversationHistory', JSON.stringify(conversationHistory));
       
+      // Show processing message in conversation
+      const processingMessage = { 
+        role: 'system', 
+        content: 'Processing audio...', 
+        isProcessing: true 
+      };
+      setConversationHistory(prev => [...prev, processingMessage]);
+      
       const response = await fetch('/api/dispatch/audio', {
         method: 'POST',
         body: formData,
       });
       
+      // Remove the processing message
+      setConversationHistory(prev => prev.filter(msg => !msg.isProcessing));
+      
       if (!response.ok) {
-        throw new Error('Failed to process audio file');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to process audio file');
       }
       
       const data = await response.json();
       const responseText = data.response;
+      const audioTranscription = data.transcription || '[Audio processed directly by Gemini]';
       
-      // Add user message placeholder for audio
-      const userMessage = { role: 'user', content: '[Audio Message]', isAudio: true };
+      setTranscription(audioTranscription);
+      
+      // Add user message with transcription for audio
+      const userMessage = { 
+        role: 'user', 
+        content: audioTranscription, 
+        isAudio: true 
+      };
       
       // Add AI response to conversation history
       const aiMessage = { role: 'assistant', content: responseText };
@@ -175,17 +203,24 @@ export default function DispatchCall() {
       setAiResponse(responseText);
       
       // Speak the response
-      speakText(responseText, () => {
-        if (callStatus === 'connected') {
-          // Reset for next input
-          setAudioFile(null);
-          if (audioInputRef.current) {
-            audioInputRef.current.value = '';
+      setIsSpeaking(true);
+      speakText(responseText, 
+        () => {
+          setIsSpeaking(false);
+          if (callStatus === 'connected') {
+            // Reset for next input
+            setAudioFile(null);
+            if (audioInputRef.current) {
+              audioInputRef.current.value = '';
+            }
           }
+        },
+        () => {
+          setIsSpeaking(true);
         }
-      });
+      );
     } catch (err) {
-      setError('Error processing your audio. Please try again.');
+      setError('Error processing your audio: ' + err.message);
       console.error('Error:', err);
     } finally {
       setIsUploading(false);
@@ -257,17 +292,19 @@ export default function DispatchCall() {
       
       setAiResponse(responseText);
       
-      // Speak the response and resume recording when done
-      speakText(responseText, () => {
-        if (callStatus === 'connected') {
-          startRecording();
+      // Speak the response
+      setIsSpeaking(true);
+      speakText(responseText, 
+        () => {
+          setIsSpeaking(false);
+          setTranscript('');
+        },
+        () => {
+          setIsSpeaking(true);
         }
-      });
-      
-      // Clear transcript for next user input
-      setTranscript('');
+      );
     } catch (err) {
-      setError('Error processing your request. Please try again.');
+      setError('Error getting response from dispatch. Please try again.');
       console.error('Error:', err);
     } finally {
       setIsProcessing(false);
@@ -363,10 +400,17 @@ export default function DispatchCall() {
                   className={`p-3 rounded-lg max-w-[85%] ${
                     message.role === 'user' 
                       ? 'bg-blue-100 ml-auto text-blue-900' 
-                      : 'bg-gray-200 text-gray-800'
+                      : message.role === 'system'
+                        ? 'bg-yellow-100 mx-auto text-yellow-900 text-center'
+                        : 'bg-gray-200 text-gray-800'
                   }`}
                 >
-                  {message.isAudio ? (
+                  {message.isProcessing ? (
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="w-4 h-4 border-2 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
+                      <p className="text-sm font-medium">{message.content}</p>
+                    </div>
+                  ) : message.isAudio ? (
                     <div className="flex items-center gap-2">
                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" />
@@ -394,13 +438,26 @@ export default function DispatchCall() {
               </>
             )}
             
-            {isRecording && transcript && (
+            {isRecording && liveTranscript && (
               <div className="bg-blue-50 p-3 rounded-lg max-w-[85%] ml-auto border border-blue-100 text-blue-800">
                 <div className="flex items-center gap-2 mb-1">
                   <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
                   <p className="text-xs font-medium text-blue-500">Listening...</p>
                 </div>
-                <p className="text-sm">{transcript}</p>
+                <p className="text-sm">{liveTranscript}</p>
+              </div>
+            )}
+            
+            {isSpeaking && (
+              <div className="p-3 rounded-lg bg-gray-700 mr-auto max-w-[80%] opacity-70">
+                <div className="flex items-center">
+                  <div className="mr-2">Dispatch speaking</div>
+                  <div className="flex space-x-1">
+                    <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                    <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                    <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                  </div>
+                </div>
               </div>
             )}
             

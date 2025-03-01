@@ -1,82 +1,69 @@
 # AI Dispatch Call System
 
-This is a proof-of-concept implementation of an AI-powered emergency dispatch call system using Next.js, Langchain, and the Gemini API.
+## Overview
+The AI Dispatch Call System is a web-based application that simulates an emergency dispatch call experience using AI. It provides a minimalistic phone call interface where users can interact with an AI dispatch assistant through voice or direct audio upload.
 
 ## Features
-
-- Minimalistic phone call interface with improved UI and visibility
-- Two input modes:
-  - Voice input using Web Speech API with real-time transcription display
-  - Direct audio upload to Gemini (record or upload audio files)
-- AI-powered responses using Gemini API via Langchain
-- Text-to-speech output for AI responses
-- Conversation history tracking
-- Simulated emergency dispatch experience
+- **Minimalistic Phone Call Interface**: Clean, intuitive UI that simulates a phone call experience
+- **Two Input Modes**:
+  - **Voice Input**: Real-time speech recognition with live transcription display
+  - **Direct Audio Upload**: Record or upload audio files for processing
+- **AI-Powered Responses**: Contextual responses from an AI dispatch assistant
+- **Text-to-Speech Output**: AI responses are spoken aloud for a realistic experience
+- **Visual Indicators**: Shows when the system is listening, processing, or speaking
+- **Conversation History**: Maintains a record of the entire conversation
 
 ## How It Works
 
-### Speech Recognition Mode
-
-1. The user initiates a call to the AI dispatch system
-2. The system greets the user with a standard dispatch greeting
-3. The user speaks into their microphone to describe their emergency
-4. The speech is converted to text using the Web Speech API (with real-time display)
-5. The text is sent to the Gemini API via Langchain with appropriate system instructions
-6. The AI generates a response based on the emergency context
-7. The response is converted back to speech using the Web Speech API
-8. The conversation continues until the call is ended
+### Voice Input Mode
+1. User initiates a call to the dispatch system
+2. User speaks into their microphone
+3. Speech is transcribed in real-time and displayed on screen
+4. Transcribed text is sent to the AI model
+5. AI generates a contextual response
+6. Response is displayed and spoken back to the user
 
 ### Direct Audio Upload Mode
-
-1. The user initiates a call and switches to audio upload mode
-2. The user can either record audio directly or upload an audio file
-3. The audio file is sent to the server
-4. The server processes the audio file and sends it to Gemini API
-5. Gemini processes the audio content and generates a response
-6. The response is sent back to the client and spoken using text-to-speech
-7. The conversation continues until the call is ended
+1. User can record audio directly in the browser or upload an audio file
+2. Audio file is sent to the server and converted to base64 format
+3. Base64-encoded audio is sent to Gemini AI for processing
+4. Gemini processes the audio content directly using its multimodal capabilities
+5. AI generates a contextual response based on the audio content
+6. Response is displayed and spoken back to the user
 
 ## Technical Implementation
 
-### Components
-
-- `page.jsx`: Main UI component for the dispatch call interface
-- `api/dispatch/route.js`: API route for handling text-based Gemini API calls
-- `api/dispatch/audio/route.js`: API route for handling audio file uploads to Gemini
-- `utils/speechUtils.js`: Utility functions for speech recognition and text-to-speech
+### Key Components
+- **page.jsx**: Main UI component for the dispatch call system
+- **api/dispatch/route.js**: API route for handling text-based interactions
+- **api/dispatch/audio/route.js**: API route for handling audio file uploads
+- **utils/speechUtils.js**: Utility functions for speech recognition and synthesis
 
 ### APIs Used
-
-- Web Speech API for speech recognition and text-to-speech
-- Gemini API via Langchain for AI responses
-- File System API for handling audio file uploads
+- **Web Speech API**: For browser-based speech recognition and synthesis
+- **Gemini AI**: For generating contextual responses to user inputs
+- **Gemini Multimodal Capabilities**: For direct audio processing using base64-encoded audio data
 
 ### System Instructions
-
-The AI is instructed to act as an emergency dispatch assistant with the following guidelines:
-
-1. Remain calm and professional at all times
-2. Gather essential information about the emergency
-3. Provide clear instructions to the caller
-4. Reassure the caller that help is on the way
-5. Keep responses concise and focused on the emergency at hand
-6. Ask for location, nature of emergency, and any immediate dangers
-7. Provide first aid instructions if needed
+The AI is instructed to act as an emergency dispatch assistant, focusing on:
+1. Remaining calm and professional
+2. Gathering essential information about emergencies
+3. Providing clear instructions
+4. Reassuring callers
+5. Keeping responses concise and focused
+6. Asking for location, nature of emergency, and immediate dangers
+7. Providing first aid instructions when needed
 
 ## Limitations
-
-- Relies on browser support for Web Speech API and MediaRecorder API
-- Voice recognition quality depends on microphone and environment
-- AI responses are limited by the capabilities of the Gemini model
-- No actual emergency services are contacted (proof-of-concept only)
-- Direct audio upload to Gemini is simulated (Gemini doesn't directly process audio files yet)
+- Relies on browser support for the Web Speech API
+- Audio quality may affect speech recognition accuracy
+- Direct audio processing with Gemini may have latency depending on file size
+- Simulates a dispatch call experience but is not connected to real emergency services
 
 ## Future Improvements
-
 - Integration with real emergency services
 - Enhanced voice recognition for noisy environments
 - Support for multiple languages
-- Location tracking for emergency response
-- Call recording and transcription for documentation
-- Fallback mechanisms for when AI fails to understand the emergency
-- Integration with Gemini's native audio processing capabilities when available 
+- Ability to handle multiple callers simultaneously
+- Improved audio processing with reduced latency
+- Integration with location services for automatic caller location 

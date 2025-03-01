@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
-import { writeFile } from 'fs/promises';
+import { writeFile, readFile } from 'fs/promises';
 import { join } from 'path';
 import { existsSync, mkdirSync } from 'fs';
 import { v4 as uuidv4 } from 'uuid';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // Ensure uploads directory exists
 const uploadsDir = join(process.cwd(), 'uploads');
@@ -50,12 +50,8 @@ export async function POST(request) {
       `${msg.role === 'user' ? 'Caller' : 'Dispatch'}: ${msg.content}`
     ).join('\n');
     
-    // Initialize Gemini model
-    const model = new ChatGoogleGenerativeAI({
-      modelName: "gemini-2.0-flash-lite",
-      maxOutputTokens: 2048,
-      apiKey: process.env.NEXT_PUBLIC_GOOGLE_API_KEY,
-    });
+    // Read the file as binary data
+    const fileData = await readFile(filepath);
     
     // Create system prompt
     const systemPrompt = `You are an emergency dispatch AI assistant. Your job is to:
@@ -70,17 +66,36 @@ export async function POST(request) {
 ${formattedHistory ? `Previous conversation:\n${formattedHistory}\n\n` : ''}
 The caller has sent an audio message. Please respond as if you are speaking to the caller directly. Keep your response brief, focused, and helpful. Do not include any prefixes like "Dispatch:" in your response.`;
     
+    // Initialize Gemini API
+    const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GOOGLE_API_KEY);
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    
+    // Create a part for the audio file
+    const audioData = {
+      inlineData: {
+        data: Buffer.from(fileData).toString('base64'),
+        mimeType: audioFile.type || "audio/mp3"
+      }
+    };
+    
     // Process with Gemini
-    const response = await model.invoke(systemPrompt);
-    const responseText = response.content;
+    const result = await model.generateContent([
+      systemPrompt,
+      audioData
+    ]);
+    
+    const responseText = result.response.text;
     
     // Return the response
-    return NextResponse.json({ response: responseText });
+    return NextResponse.json({ 
+      response: responseText,
+      transcription: "Audio processed directly by Gemini" // We don't get a separate transcription
+    });
     
   } catch (error) {
     console.error('Error processing audio file:', error);
     return NextResponse.json(
-      { error: 'Failed to process audio file' },
+      { error: 'Failed to process audio file: ' + error.message },
       { status: 500 }
     );
   }
