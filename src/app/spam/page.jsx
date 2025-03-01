@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 
 export default function SpamDetection() {
@@ -9,6 +9,23 @@ export default function SpamDetection() {
   const [parsedResult, setParsedResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const textareaRef = useRef(null);
+
+  const adjustTextareaHeight = () => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = 'auto';
+      textarea.style.height = `${textarea.scrollHeight}px`;
+    }
+  };
+
+  useEffect(() => {
+    adjustTextareaHeight();
+  }, [message]);
+
+  const handleMessageChange = (e) => {
+    setMessage(e.target.value);
+  };
 
   const analyzeMessage = async () => {
     if (!message.trim()) {
@@ -55,10 +72,12 @@ export default function SpamDetection() {
       
       <div className="space-y-4">
         <textarea
-          className="w-full p-3 border rounded-lg min-h-[100px] text-white"
+          ref={textareaRef}
+          className="w-full p-3 border rounded-lg min-h-[100px] text-white resize-none overflow-hidden"
           placeholder="Enter SMS message here..."
           value={message}
-          onChange={(e) => setMessage(e.target.value)}
+          onChange={handleMessageChange}
+          rows={1}
         />
         
         <button
