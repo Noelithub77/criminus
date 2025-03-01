@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Safety Detection System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .video-container {
+            margin: 20px 0;
+            text-align: center;
+            position: relative;
+        }
+        #video_feed {
+            max-width: 100%;
+            height: auto;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+        }
+        .controls {
+            margin: 20px 0;
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .file-upload {
+            margin: 20px 0;
+            text-align: center;
+        }
+        #video_file {
+            margin-bottom: 10px;
+        }
+        .alert-banner {
+            background-color: #ff3333;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-weight: bold;
+            border-radius: 4px;
+            margin: 20px 0;
+            display: none;
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        .mode-selector {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .tab-buttons {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .tab-button {
+            padding: 10px 20px;
+            background-color: #ddd;
+            border: none;
+            cursor: pointer;
+        }
+        .tab-button.active {
+            background-color: #007bff;
+            color: white;
+        }
+        .tab-button:first-child {
+            border-radius: 4px 0 0 4px;
+        }
+        .tab-button:last-child {
+            border-radius: 0 4px 4px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Safety Detection System</h1>
+        
+        <div class="tab-buttons">
+            <button class="tab-button active" onclick="switchMode('safety')">Safety Detection</button>
+            <button class="tab-button" onclick="switchMode('basic')">Basic Gender Detection</button>
+        </div>
+        
+        <div id="alert-banner" class="alert-banner">
+            ⚠️ ALERT: Woman potentially unsafe! ⚠️
+        </div>
+        
+        <div class="video-container">
+            <img id="video_feed" src="{{ url_for('video_feed') }}?session_id=webcam" alt="Video Feed">
+        </div>
+
+        <div class="controls">
+            <button onclick="startWebcam()">Start Webcam</button>
+            <button onclick="stopWebcam()">Stop Webcam</button>
+        </div>
+
+        <div class="file-upload">
+            <h3>Upload Video</h3>
+            <input type="file" id="video_file" accept="video/*">
+            <button onclick="uploadVideo()">Process Video</button>
+        </div>
+    </div>
+
+    <script>
+        let isWebcamActive = true;
+        let currentMode = 'safety';
+        let sessionId = 'webcam';
+        let alertCheckInterval = null;
+        const videoFeed = document.getElementById('video_feed');
+        const alertBanner = document.getElementById('alert-banner');
+        
+        // Start checking for alerts
+        startAlertCheck();
+        
+        function switchMode(mode) {
+            currentMode = mode;
+            const buttons = document.querySelectorAll('.tab-button');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            if (isWebcamActive) {
+                if (mode === 'safety') {
+                    videoFeed.src = `{{ url_for('video_feed') }}?session_id=${sessionId}`;
+                    startAlertCheck();
+                } else {
+                    videoFeed.src = "{{ url_for('video_feed_basic') }}";
+                    stopAlertCheck();
+                    hideAlert();
+                }
+            }
+        }
+
+        function startWebcam() {
+            if (currentMode === 'safety') {
+                sessionId = 'webcam_' + Date.now();
+                videoFeed.src = `{{ url_for('video_feed') }}?session_id=${sessionId}`;
+                startAlertCheck();
+            } else {
+                videoFeed.src = "{{ url_for('video_feed_basic') }}";
+            }
+            isWebcamActive = true;
+        }
+
+        function stopWebcam() {
+            videoFeed.src = '';
+            isWebcamActive = false;
+            stopAlertCheck();
+            hideAlert();
+        }
+        
+        function startAlertCheck() {
+            stopAlertCheck(); // Clear any existing interval
+            
+            if (currentMode === 'safety') {
+                alertCheckInterval = setInterval(() => {
+                    checkAlertStatus();
+                }, 1000); // Check every second
+            }
+        }
+        
+        function stopAlertCheck() {
+            if (alertCheckInterval) {
+                clearInterval(alertCheckInterval);
+                alertCheckInterval = null;
+            }
+        }
+        
+        function showAlert() {
+            alertBanner.style.display = 'block';
+        }
+        
+        function hideAlert() {
+            alertBanner.style.display = 'none';
+        }
+        
+        function checkAlertStatus() {
+            if (!isWebcamActive || currentMode !== 'safety') return;
+            
+            fetch(`/check_alert_status?session_id=${sessionId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.alert) {
+                        showAlert();
+                    } else {
+                        hideAlert();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking alert status:', error);
+                });
+        }
+
+        function uploadVideo() {
+            const fileInput = document.getElementById('video_file');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('Please select a video file first.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('video', file);
+            
+            // Generate a unique session ID for this video
+            sessionId = 'video_' + Date.now();
+            
+            // Show loading state
+            videoFeed.src = '';
+            videoFeed.alt = 'Processing video...';
+            
+            fetch('/process_video', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (response.ok) {
+                    // For video processing, we'll use the streaming response
+                    videoFeed.src = `/process_video?session_id=${sessionId}`;
+                    videoFeed.alt = 'Video Feed';
+                    
+                    if (currentMode === 'safety') {
+                        startAlertCheck();
+                    }
+                } else {
+                    throw new Error('Video processing failed');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error processing video');
+                videoFeed.alt = 'Video Feed';
+            });
+        }
+    </script>
+</body>
+</html> 
