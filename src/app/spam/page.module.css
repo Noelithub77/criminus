@@ -1,0 +1,30 @@
+.spamContainer {
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.contentContainer {
+  width: 100%;
+  max-width: 42rem;
+  margin: 0 auto;
+}
+
+.pageTitle {
+  font-size: 1.875rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+@media (min-width: 768px) {
+  .spamContainer {
+    padding: 6rem;
+  }
+} 

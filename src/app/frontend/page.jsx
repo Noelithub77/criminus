@@ -136,10 +136,9 @@ function App() {
             strokeLinecap="round"
             strokeLinejoin="round"
           >
-            <circle cx="11" cy="11" r="8"></circle>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
           </svg>
-          <span>Search</span>
+          <span>Chat</span>
         </button>
         <button
           className={`tab-button ${activeTab === "report" ? "active" : ""}`}

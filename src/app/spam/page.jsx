@@ -3,6 +3,19 @@
 import { useState, useRef, useEffect } from 'react';
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { analyzeLinkContent, extractUrls } from '../../utils/linkScraper';
+import Link from 'next/link';
+
+// Add CSS to ensure full width
+const pageStyles = {
+  minHeight: '100vh',
+  width: '100vw',
+  maxWidth: '100%',
+  margin: 0,
+  padding: '1.5rem',
+  backgroundColor: 'black',
+  color: '#d1d5db',
+  boxSizing: 'border-box'
+};
 
 export default function SpamDetection() {
   const [message, setMessage] = useState('');
@@ -34,6 +47,15 @@ export default function SpamDetection() {
   useEffect(() => {
     adjustTextareaHeight();
   }, [message]);
+
+  // Add effect to force layout recalculation after component mounts
+  useEffect(() => {
+    // Force layout recalculation
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => {
+      document.body.style.overflow = '';
+    }, 0);
+  }, []);
 
   const handleMessageChange = (e) => {
     setMessage(e.target.value);
@@ -147,46 +169,129 @@ Content: ${link.scrapedContent || 'N/A'}
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-6 space-y-6">
-      <h1 className="text-3xl font-bold mb-8">SMS Spam Detector</h1>
+    <div style={pageStyles}>
+      {/* Back button */}
+      <div className="mb-6">
+        <Link href="/frontend" className="flex items-center text-blue-400 hover:text-blue-300 transition-colors w-fit">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
+          </svg>
+          <span>Back to Frontend</span>
+        </Link>
+      </div>
       
-      <div className="space-y-4">
-        <textarea
-          ref={textareaRef}
-          className="w-full p-3 border rounded-lg min-h-[100px] text-black bg-white resize-none overflow-hidden"
-          placeholder="Enter SMS message here..."
-          value={message}
-          onChange={handleMessageChange}
-          rows={1}
-        />
+      {/* Header with name */}
+      <div className="flex justify-between items-center mb-12">
+        <h1 className="text-2xl font-medium text-gray-300">Sathyameva Jayadhe</h1>
+        <div className="w-12 h-12 bg-gray-700 rounded-full"></div>
+      </div>
+      
+      {/* Scam Detection Title with Icon */}
+      <div className="flex items-center gap-3 mb-10">
+        <div className="w-16 h-16 flex items-center justify-center">
+          <div className="w-14 h-14 bg-transparent rounded-full flex items-center justify-center border-2 border-blue-400 relative">
+            <span className="text-blue-400 text-2xl font-bold">S</span>
+            <div className="absolute -right-1 -bottom-1 w-8 h-8 bg-black flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+              </svg>
+            </div>
+          </div>
+        </div>
+        <h2 className="text-4xl font-bold text-blue-400">Scam Detection</h2>
+      </div>
+      
+      {/* Input Section */}
+      <div className="mt-12">
+        <h3 className="text-2xl mb-6 text-blue-400">Input</h3>
+        
+        <div className="bg-gray-500 bg-opacity-30 rounded-lg p-6 mb-6">
+          <textarea
+            ref={textareaRef}
+            className="w-full p-3 border-0 rounded-lg min-h-[120px] text-gray-300 bg-transparent resize-none focus:outline-none"
+            placeholder="Enter SMS message to analyze..."
+            value={message}
+            onChange={handleMessageChange}
+            rows={4}
+          />
+          
+          {/* Link icon */}
+          {message.includes('http') && (
+            <div className="flex items-center mt-2 text-gray-500">
+              <span className="mr-2">🔗</span>
+              <span className="text-sm">Link detected</span>
+            </div>
+          )}
+        </div>
         
         <button
           onClick={analyzeMessage}
           disabled={loading || isScrapingLinks}
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+          className="w-full bg-teal-700 text-white py-3 px-4 rounded-lg hover:bg-teal-600 disabled:opacity-50 text-lg font-medium"
         >
-          {isScrapingLinks ? 'Scraping Links...' : loading ? 'Analyzing...' : 'Analyze Message'}
+          {isScrapingLinks ? 'Analyzing...' : loading ? 'Analyzing...' : 'Detect'}
         </button>
         
         {error && (
-          <div className="text-red-500 p-3 rounded-lg bg-red-50">
+          <div className="text-red-400 p-3 rounded-lg bg-red-900 bg-opacity-30 mt-4">
             {error}
           </div>
         )}
-        
-        {linkAnalysis && linkAnalysis.foundLinks && (
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <h3 className="font-semibold text-blue-700 mb-2">Link Analysis</h3>
-            <p className="text-sm text-blue-600 mb-2">
+      </div>
+      
+      {/* Results Section */}
+      {parsedResult && (
+        <div className="mt-10 space-y-6">
+          <h3 className="text-2xl mb-6 text-gray-400">Analysis Results</h3>
+          
+          <div className="bg-gray-800 p-6 rounded-lg">
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="p-4 bg-gray-700 rounded-lg">
+                <h3 className="font-semibold text-orange-400">Spam Score</h3>
+                <div className="text-3xl font-bold text-orange-300">
+                  {parsedResult.spamScore}%
+                </div>
+              </div>
+              <div className="p-4 bg-gray-700 rounded-lg">
+                <h3 className="font-semibold text-red-400">Danger Score</h3>
+                <div className="text-3xl font-bold text-red-300">
+                  {parsedResult.dangerScore}%
+                </div>
+              </div>
+            </div>
+            
+            <div>
+              <h3 className="font-semibold text-gray-300 mb-3">Warnings</h3>
+              <div className="bg-gray-700 p-4 rounded-lg">
+                <ul className="list-disc pl-5 space-y-2">
+                  {parsedResult.warnings?.map((warning, index) => (
+                    <li key={index} className="text-gray-300">
+                      {warning}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Link Analysis Section */}
+      {linkAnalysis && linkAnalysis.foundLinks && (
+        <div className="mt-10 space-y-6">
+          <h3 className="text-2xl mb-6 text-gray-400">Link Analysis</h3>
+          
+          <div className="bg-gray-800 p-6 rounded-lg">
+            <p className="text-sm text-gray-400 mb-4">
               Found {linkAnalysis.allLinks.length} link(s) in the message. 
               {linkAnalysis.additionalInfo && ` ${linkAnalysis.additionalInfo}`}
             </p>
             
             {/* Link Summary */}
             {linkAnalysis.processedLinks.some(link => link.hasLoginForm || link.hasPasswordFields) && (
-              <div className="bg-red-50 p-3 rounded-lg mb-4 border border-red-200">
-                <p className="text-sm font-medium text-red-700 mb-1">⚠️ Warning: Suspicious Links Detected</p>
-                <p className="text-xs text-red-600">
+              <div className="bg-red-900 bg-opacity-30 p-4 rounded-lg mb-6 border border-red-800">
+                <p className="text-sm font-medium text-red-400 mb-1">⚠️ Warning: Suspicious Links Detected</p>
+                <p className="text-xs text-red-300">
                   One or more links contain login forms or password fields, which may indicate phishing attempts.
                   Be extremely cautious with these links.
                 </p>
@@ -199,51 +304,51 @@ Content: ${link.scrapedContent || 'N/A'}
                 const isSuspicious = link.hasLoginForm || link.hasPasswordFields;
                 
                 return (
-                  <div key={index} className={`bg-white p-4 rounded-lg border ${isSuspicious ? 'border-red-300' : 'border-blue-200'}`}>
+                  <div key={index} className={`bg-gray-700 p-4 rounded-lg border ${isSuspicious ? 'border-red-800' : 'border-gray-600'}`}>
                     <div className="flex justify-between items-start mb-2">
-                      <h4 className="font-medium text-blue-800 break-all">{link.url}</h4>
+                      <h4 className="font-medium text-blue-300 break-all">{link.url}</h4>
                       <div className="flex items-center gap-2">
                         {isSuspicious && (
-                          <span className="text-xs px-2 py-1 rounded-full bg-red-100 text-red-800 flex items-center">
+                          <span className="text-xs px-2 py-1 rounded-full bg-red-900 text-red-300 flex items-center">
                             <span className="mr-1">⚠️</span> Suspicious
                           </span>
                         )}
-                        <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-800">Link {index + 1}</span>
+                        <span className="text-xs px-2 py-1 rounded-full bg-gray-600 text-gray-300">Link {index + 1}</span>
                       </div>
                     </div>
                     
                     {link.error ? (
-                      <div className="text-red-500 text-sm p-2 bg-red-50 rounded">
+                      <div className="text-red-400 text-sm p-2 bg-red-900 bg-opacity-30 rounded">
                         <p className="font-medium">Error analyzing link:</p>
                         <p>{link.error}</p>
                       </div>
                     ) : (
                       <div className="space-y-3">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          <div className="p-3 bg-gray-50 rounded">
-                            <p className="text-sm font-medium text-gray-700">Title</p>
-                            <p className="text-sm text-gray-900">{link.title || 'N/A'}</p>
+                          <div className="p-3 bg-gray-800 rounded">
+                            <p className="text-sm font-medium text-gray-400">Title</p>
+                            <p className="text-sm text-gray-300">{link.title || 'N/A'}</p>
                           </div>
-                          <div className="p-3 bg-gray-50 rounded">
-                            <p className="text-sm font-medium text-gray-700">Description</p>
-                            <p className="text-sm text-gray-900">{link.metaDescription || 'N/A'}</p>
+                          <div className="p-3 bg-gray-800 rounded">
+                            <p className="text-sm font-medium text-gray-400">Description</p>
+                            <p className="text-sm text-gray-300">{link.metaDescription || 'N/A'}</p>
                           </div>
                         </div>
                         
                         {/* Security indicators */}
                         <div className="flex flex-wrap gap-2">
                           {link.hasForms && (
-                            <span className="text-xs px-2 py-1 rounded-full bg-yellow-100 text-yellow-800">
+                            <span className="text-xs px-2 py-1 rounded-full bg-yellow-900 bg-opacity-30 text-yellow-300">
                               Contains Forms
                             </span>
                           )}
                           {link.hasPasswordFields && (
-                            <span className="text-xs px-2 py-1 rounded-full bg-orange-100 text-orange-800">
+                            <span className="text-xs px-2 py-1 rounded-full bg-orange-900 bg-opacity-30 text-orange-300">
                               Password Fields
                             </span>
                           )}
                           {link.hasLoginForm && (
-                            <span className="text-xs px-2 py-1 rounded-full bg-red-100 text-red-800">
+                            <span className="text-xs px-2 py-1 rounded-full bg-red-900 bg-opacity-30 text-red-300">
                               ⚠️ Login Form (Potential Phishing)
                             </span>
                           )}
@@ -253,10 +358,10 @@ Content: ${link.scrapedContent || 'N/A'}
                         <div className={`md:block ${expandedLinks[index] ? 'block' : 'hidden'}`}>
                           {/* Content preview */}
                           <div className="mt-2">
-                            <p className="text-sm font-medium text-gray-700 mb-1">Content Preview</p>
-                            <div className="text-xs p-3 bg-gray-50 rounded max-h-32 overflow-y-auto">
+                            <p className="text-sm font-medium text-gray-400 mb-1">Content Preview</p>
+                            <div className="text-xs p-3 bg-gray-800 rounded max-h-32 overflow-y-auto">
                               {link.scrapedContent ? (
-                                <p className="whitespace-pre-wrap text-gray-900">{link.scrapedContent}</p>
+                                <p className="whitespace-pre-wrap text-gray-300">{link.scrapedContent}</p>
                               ) : (
                                 <p className="text-gray-500 italic">No content available</p>
                               )}
@@ -266,10 +371,10 @@ Content: ${link.scrapedContent || 'N/A'}
                           {/* Headers if available */}
                           {link.h1s && link.h1s.length > 0 && (
                             <div className="mt-2">
-                              <p className="text-sm font-medium text-gray-700 mb-1">Main Headers</p>
+                              <p className="text-sm font-medium text-gray-400 mb-1">Main Headers</p>
                               <ul className="text-xs list-disc list-inside pl-2">
                                 {link.h1s.slice(0, 3).map((header, i) => (
-                                  <li key={i} className="text-gray-700">{header}</li>
+                                  <li key={i} className="text-gray-300">{header}</li>
                                 ))}
                                 {link.h1s.length > 3 && (
                                   <li className="text-gray-500 italic">...and {link.h1s.length - 3} more</li>
@@ -291,7 +396,7 @@ Content: ${link.scrapedContent || 'N/A'}
                     {/* Expand/collapse button for mobile */}
                     <button 
                       onClick={() => toggleLinkExpand(index)}
-                      className="mt-3 text-xs text-blue-600 hover:text-blue-800 md:hidden block w-full text-center py-1 border border-blue-100 rounded"
+                      className="mt-3 text-xs text-blue-400 hover:text-blue-300 md:hidden block w-full text-center py-1 border border-gray-600 rounded"
                     >
                       {expandedLinks[index] ? 'Show less details' : 'Show more details'}
                     </button>
@@ -300,49 +405,8 @@ Content: ${link.scrapedContent || 'N/A'}
               })}
             </div>
           </div>
-        )}
-        
-        {parsedResult && (
-          <div className="space-y-6">
-            <div className="bg-white p-6 rounded-lg shadow-lg">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 bg-orange-50 rounded-lg">
-                  <h3 className="font-semibold text-orange-700">Spam Score</h3>
-                  <div className="text-3xl font-bold text-orange-500">
-                    {parsedResult.spamScore}%
-                  </div>
-                </div>
-                <div className="p-4 bg-red-50 rounded-lg">
-                  <h3 className="font-semibold text-red-700">Danger Score</h3>
-                  <div className="text-3xl font-bold text-red-500">
-                    {parsedResult.dangerScore}%
-                  </div>
-                </div>
-              </div>
-              
-              <div className="mt-6">
-                <h3 className="font-semibold text-gray-700 mb-3">Warnings</h3>
-                <div className="bg-yellow-50 p-4 rounded-lg">
-                  <ul className="list-disc pl-5 space-y-2">
-                    {parsedResult.warnings?.map((warning, index) => (
-                      <li key={index} className="text-gray-700">
-                        {warning}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
-              <h3 className="font-semibold text-white mb-3">Raw Response</h3>
-              <pre className="whitespace-pre-wrap break-words text-sm text-gray-300">
-                {JSON.stringify(result, null, 2)}
-              </pre>
-            </div>
-          </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 } 
