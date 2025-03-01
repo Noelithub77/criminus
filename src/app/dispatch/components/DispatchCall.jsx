@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import { useAudioRecording } from '../hooks/useAudioRecording';
 import { useAIProcessing } from '../hooks/useAIProcessing';
@@ -20,7 +20,9 @@ import StatusBar from './StatusBar';
  */
 export default function DispatchCall() {
   const [textInput, setTextInput] = useState('');
+  const [textInputFocused, setTextInputFocused] = useState(false);
   const audioInputRef = useRef(null);
+  const textInputRef = useRef(null);
   
   // Initialize hooks
   const {
@@ -55,6 +57,7 @@ export default function DispatchCall() {
     conversationHistory,
     isSpeaking,
     isProcessingText,
+    streamingResponse,
     uploadAudio,
     processTranscript,
     processTextInput,
@@ -76,12 +79,33 @@ export default function DispatchCall() {
     inputMode,
     initiateCall,
     endCall,
-    toggleInputMode,
-    resetCall
+    resetCall,
+    setInputMode
   } = useCallState();
   
   // Combine errors from different sources
   const error = speechError || audioError || aiError;
+  
+  // Handle text input focus/blur to switch modes
+  const handleTextInputFocus = () => {
+    setTextInputFocused(true);
+    if (inputMode === 'unified' && callStatus === 'connected') {
+      setInputMode('text');
+      
+      // Stop any ongoing recording when switching to text mode
+      if (isListening || isRecordingAudio) {
+        stopRecording();
+      }
+    }
+  };
+  
+  const handleTextInputBlur = () => {
+    setTextInputFocused(false);
+    // Only switch back to unified mode if the text input is empty
+    if (inputMode === 'text' && !textInput.trim() && callStatus === 'connected') {
+      setInputMode('unified');
+    }
+  };
   
   // Handle recording start/stop
   const startRecording = () => {
@@ -127,20 +151,31 @@ export default function DispatchCall() {
     
     await processTextInput(textInput, voiceParams);
     setTextInput('');
+    
+    // Focus back on the text input after submission
+    if (textInputRef.current) {
+      textInputRef.current.focus();
+    }
   };
   
+  // Auto-focus text input when switching to text mode
+  useEffect(() => {
+    if (inputMode === 'text' && textInputRef.current && callStatus === 'connected') {
+      textInputRef.current.focus();
+    }
+  }, [inputMode, callStatus]);
+  
   return (
-    <div className="max-w-md mx-auto p-4 min-h-screen flex flex-col bg-gray-100">
-      <h1 className="text-2xl font-bold mb-4 text-center text-gray-800">Emergency Dispatch AI</h1>
+    <div className="max-w-md mx-auto p-4 min-h-screen flex flex-col bg-gray-900 text-gray-100">
+      <h1 className="text-2xl font-bold mb-4 text-center text-cyan-400">Emergency Dispatch AI</h1>
       
       <div className="flex-1 flex flex-col">
         {/* Phone UI */}
-        <div className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col flex-1 border border-gray-200">
+        <div className="bg-gray-800 rounded-lg shadow-lg overflow-hidden flex flex-col flex-1 border border-gray-700">
           {/* Status Bar */}
           <StatusBar 
             callStatus={callStatus}
             toggleVoiceSettings={toggleVoiceSettings}
-            toggleInputMode={toggleInputMode}
             inputMode={inputMode}
             isRecording={isListening}
             isProcessing={isProcessing}
@@ -168,15 +203,19 @@ export default function DispatchCall() {
             audioVisualization={audioVisualization}
             isSpeaking={isSpeaking}
             error={error}
+            streamingResponse={streamingResponse}
           />
           
-          {/* Text Input */}
-          {inputMode === 'text' && callStatus === 'connected' && (
+          {/* Text Input - Always visible when connected */}
+          {callStatus === 'connected' && (
             <TextInput 
               textInput={textInput}
               setTextInput={setTextInput}
               handleTextSubmit={handleTextSubmit}
               isProcessingText={isProcessingText}
+              onFocus={handleTextInputFocus}
+              onBlur={handleTextInputBlur}
+              ref={textInputRef}
             />
           )}
           
@@ -208,7 +247,7 @@ export default function DispatchCall() {
           width: 16px;
           height: 16px;
           border-radius: 50%;
-          background: #3b82f6;
+          background: #22d3ee;
           cursor: pointer;
         }
         
@@ -216,7 +255,7 @@ export default function DispatchCall() {
           width: 16px;
           height: 16px;
           border-radius: 50%;
-          background: #3b82f6;
+          background: #22d3ee;
           cursor: pointer;
         }
       `}</style>

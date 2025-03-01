@@ -17,6 +17,24 @@ export function useVoiceSettings() {
   });
   const [availableVoices, setAvailableVoices] = useState([]);
   
+  // Load saved voice settings from localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedSettings = localStorage.getItem('voiceSettings');
+      if (savedSettings) {
+        try {
+          const parsedSettings = JSON.parse(savedSettings);
+          setVoiceParams(prev => ({
+            ...prev,
+            ...parsedSettings
+          }));
+        } catch (err) {
+          console.error('Error parsing saved voice settings:', err);
+        }
+      }
+    }
+  }, []);
+  
   // Load available voices
   useEffect(() => {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
@@ -24,16 +42,24 @@ export function useVoiceSettings() {
       const voices = getAvailableVoices();
       if (voices.length > 0) {
         setAvailableVoices(voices);
-        // Set default voice if available
-        const defaultVoice = voices.find(voice => 
-          voice.name.includes('Google US English Female') ||
-          voice.name.includes('Microsoft Zira') ||
-          voice.name.includes('Natural') ||
-          voice.name.includes('Female') ||
-          voice.name.includes('Google')
-        );
-        if (defaultVoice) {
-          setVoiceParams(prev => ({ ...prev, voiceURI: defaultVoice.voiceURI }));
+        
+        // Set default voice if no saved voice is available
+        if (!voiceParams.voiceURI) {
+          const defaultVoice = voices.find(voice => 
+            voice.name.includes('Google US English Female') ||
+            voice.name.includes('Microsoft Zira') ||
+            voice.name.includes('Natural') ||
+            voice.name.includes('Female') ||
+            voice.name.includes('Google')
+          );
+          if (defaultVoice) {
+            setVoiceParams(prev => {
+              const newParams = { ...prev, voiceURI: defaultVoice.voiceURI };
+              // Save to localStorage
+              localStorage.setItem('voiceSettings', JSON.stringify(newParams));
+              return newParams;
+            });
+          }
         }
       }
       
@@ -52,15 +78,25 @@ export function useVoiceSettings() {
             voice.name.includes('Google')
           );
           if (defaultVoice) {
-            setVoiceParams(prev => ({ ...prev, voiceURI: defaultVoice.voiceURI }));
+            setVoiceParams(prev => {
+              const newParams = { ...prev, voiceURI: defaultVoice.voiceURI };
+              // Save to localStorage
+              localStorage.setItem('voiceSettings', JSON.stringify(newParams));
+              return newParams;
+            });
           }
         }
       };
     }
-  }, []);
+  }, [voiceParams.voiceURI]);
   
   const handleVoiceParamChange = (param, value) => {
-    setVoiceParams(prev => ({ ...prev, [param]: value }));
+    setVoiceParams(prev => {
+      const newParams = { ...prev, [param]: value };
+      // Save to localStorage
+      localStorage.setItem('voiceSettings', JSON.stringify(newParams));
+      return newParams;
+    });
   };
   
   const toggleVoiceSettings = () => {

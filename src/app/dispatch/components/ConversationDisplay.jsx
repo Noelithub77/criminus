@@ -13,7 +13,8 @@ export default function ConversationDisplay({
   liveTranscript,
   audioVisualization,
   isSpeaking,
-  error
+  error,
+  streamingResponse
 }) {
   const conversationContainerRef = useRef(null);
   
@@ -22,12 +23,12 @@ export default function ConversationDisplay({
     if (conversationContainerRef.current) {
       conversationContainerRef.current.scrollTop = conversationContainerRef.current.scrollHeight;
     }
-  }, [conversationHistory, showWaveform, isSpeaking, error]);
+  }, [conversationHistory, showWaveform, isSpeaking, error, streamingResponse]);
   
   return (
     <div 
       ref={conversationContainerRef}
-      className="flex-1 p-4 overflow-y-auto bg-gray-50 space-y-3"
+      className="flex-1 p-4 overflow-y-auto bg-gray-800 space-y-3"
     >
       {conversationHistory.length > 0 ? (
         conversationHistory.map((message, index) => (
@@ -35,23 +36,37 @@ export default function ConversationDisplay({
             key={index} 
             className={`p-3 rounded-lg max-w-[85%] ${
               message.role === 'user' 
-                ? 'bg-blue-100 ml-auto text-blue-900' 
+                ? 'bg-gray-700 ml-auto text-gray-100 border border-gray-600' 
                 : message.role === 'system'
-                  ? 'bg-yellow-100 mx-auto text-yellow-900 text-center'
-                  : 'bg-gray-200 text-gray-800'
+                  ? 'bg-gray-900 mx-auto text-cyan-300 text-center border border-gray-700'
+                  : 'bg-gray-900 text-cyan-100 border border-gray-700'
             }`}
           >
             {message.isProcessing ? (
               <div className="flex items-center justify-center gap-2">
-                <div className="w-4 h-4 border-2 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
+                <div className="w-4 h-4 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
                 <p className="text-sm font-medium">{typeof message.content === 'function' ? 'Processing...' : message.content}</p>
               </div>
             ) : message.isAudio ? (
               <div className="flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-cyan-400">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" />
                 </svg>
                 <p className="text-sm font-medium">{typeof message.content === 'function' ? 'Message content unavailable' : message.content}</p>
+              </div>
+            ) : message.isStreaming && index === conversationHistory.length - 1 ? (
+              <div className="text-sm">
+                <p>{streamingResponse}<span className="animate-pulse text-cyan-400">▋</span></p>
+                {isSpeaking && (
+                  <div className="flex items-center mt-1 text-xs text-cyan-300">
+                    <span className="mr-1">Speaking</span>
+                    <div className="flex space-x-1">
+                      <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                      <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                      <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <p className="text-sm">{typeof message.content === 'function' ? 'Message content unavailable' : message.content}</p>
@@ -62,13 +77,13 @@ export default function ConversationDisplay({
         <>
           {callStatus === 'idle' && (
             <div className="text-center p-4">
-              <p className="text-gray-500">Press the call button to connect to AI dispatch</p>
+              <p className="text-gray-400">Press the call button to connect to AI dispatch</p>
             </div>
           )}
           
           {callStatus === 'calling' && (
             <div className="text-center p-4">
-              <p className="text-gray-500">Connecting to AI dispatch...</p>
+              <p className="text-gray-400">Connecting to AI dispatch...</p>
             </div>
           )}
         </>
@@ -76,10 +91,10 @@ export default function ConversationDisplay({
       
       {/* Enhanced recording visualization */}
       {showWaveform && (
-        <div className="bg-blue-50 p-3 rounded-lg max-w-[85%] ml-auto border border-blue-100 text-blue-800">
+        <div className="bg-gray-700 p-3 rounded-lg max-w-[85%] ml-auto border border-gray-600 text-cyan-100">
           <div className="flex items-center gap-2 mb-1">
-            <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-            <p className="text-xs font-medium text-blue-500">Recording...</p>
+            <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse"></div>
+            <p className="text-xs font-medium text-cyan-300">Recording...</p>
           </div>
           
           {/* Audio waveform visualization */}
@@ -89,7 +104,7 @@ export default function ConversationDisplay({
                 {audioVisualization.map((value, i) => (
                   <div 
                     key={i}
-                    className="bg-blue-500 rounded-full w-1"
+                    className="bg-cyan-400 rounded-full w-1"
                     style={{ 
                       height: `${Math.max(15, value / 2)}%`,
                       animation: 'pulse 1s infinite',
@@ -103,7 +118,7 @@ export default function ConversationDisplay({
                 {[...Array(10)].map((_, i) => (
                   <div 
                     key={i}
-                    className="bg-blue-500 rounded-full w-1"
+                    className="bg-cyan-400 rounded-full w-1"
                     style={{ 
                       height: `${20 + Math.random() * 60}%`,
                       animation: 'pulse 1s infinite',
@@ -119,30 +134,31 @@ export default function ConversationDisplay({
           <div className="text-sm font-medium">
             {transcript && <p className="mb-1">{transcript}</p>}
             {liveTranscript && (
-              <p className="text-blue-400 italic">{liveTranscript}</p>
+              <p className="text-cyan-300 italic">{liveTranscript}</p>
             )}
             {!transcript && !liveTranscript && (
-              <p className="text-blue-400 italic">Speak now...</p>
+              <p className="text-cyan-300 italic">Speak now...</p>
             )}
           </div>
         </div>
       )}
       
-      {isSpeaking && (
-        <div className="p-3 rounded-lg bg-gray-700 mr-auto max-w-[80%] text-white">
+      {/* Only show this if we're speaking but not streaming text */}
+      {isSpeaking && !streamingResponse && conversationHistory.length > 0 && !conversationHistory[conversationHistory.length - 1].isStreaming && (
+        <div className="p-3 rounded-lg bg-gray-900 mr-auto max-w-[80%] text-cyan-100 border border-gray-700">
           <div className="flex items-center">
             <div className="mr-2">Dispatch speaking</div>
             <div className="flex space-x-1">
-              <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-              <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-              <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+              <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+              <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+              <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
             </div>
           </div>
         </div>
       )}
       
       {error && (
-        <div className="bg-red-50 p-3 rounded-lg text-red-700 text-sm border border-red-100">
+        <div className="bg-gray-900 p-3 rounded-lg text-red-400 text-sm border border-red-900">
           <div className="flex items-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
@@ -154,7 +170,7 @@ export default function ConversationDisplay({
       
       {callStatus === 'ended' && conversationHistory.length === 0 && (
         <div className="text-center p-4">
-          <p className="text-gray-500">Call has ended</p>
+          <p className="text-gray-400">Call has ended</p>
         </div>
       )}
     </div>

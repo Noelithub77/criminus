@@ -1,34 +1,39 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, forwardRef } from 'react';
 
 /**
  * Text input component for typing messages
  */
-export default function TextInput({ 
+const TextInput = forwardRef(({ 
   textInput, 
   setTextInput, 
   handleTextSubmit, 
-  isProcessingText 
-}) {
-  const textInputRef = useRef(null);
+  isProcessingText,
+  onFocus,
+  onBlur
+}, ref) => {
+  const localRef = useRef(null);
+  const inputRef = ref || localRef;
   
   return (
-    <div className="p-3 bg-gray-50 border-t border-gray-200">
+    <div className="p-3 bg-gray-900 border-t border-gray-700">
       <form onSubmit={handleTextSubmit} className="flex gap-2">
         <input
           type="text"
           value={textInput}
           onChange={(e) => setTextInput(e.target.value)}
           placeholder="Type your message..."
-          className="flex-1 py-2 px-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="flex-1 py-2 px-3 bg-gray-800 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500 text-gray-100 placeholder-gray-500"
           disabled={isProcessingText}
-          ref={textInputRef}
+          ref={inputRef}
+          onFocus={onFocus}
+          onBlur={onBlur}
         />
         <button
           type="submit"
           disabled={isProcessingText || !textInput.trim()}
-          className="py-2 px-4 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50 flex items-center justify-center gap-2"
+          className="py-2 px-4 bg-cyan-600 text-white rounded-md hover:bg-cyan-700 disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
         >
           {isProcessingText ? (
             <>
@@ -47,4 +52,8 @@ export default function TextInput({
       </form>
     </div>
   );
-} 
+});
+
+TextInput.displayName = 'TextInput';
+
+export default TextInput; 

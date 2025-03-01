@@ -14,12 +14,12 @@ export default function VoiceSettings({
   if (!showVoiceSettings) return null;
   
   return (
-    <div className="bg-gray-50 p-3 border-b border-gray-200">
-      <div className="flex justify-between items-center mb-2">
-        <h3 className="text-sm font-medium text-gray-700">Voice Settings</h3>
+    <div className="bg-gray-800 p-4 border-b border-gray-700">
+      <div className="flex justify-between items-center mb-3">
+        <h3 className="text-sm font-medium text-cyan-400">Voice Settings</h3>
         <button 
           onClick={toggleVoiceSettings}
-          className="text-gray-500 hover:text-gray-700"
+          className="text-gray-400 hover:text-gray-200 transition-colors"
           aria-label="Close voice settings"
         >
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
@@ -28,15 +28,15 @@ export default function VoiceSettings({
         </button>
       </div>
       
-      <div className="space-y-3">
+      <div className="space-y-4">
         {/* Voice Selection */}
         <div>
-          <label htmlFor="voice-select" className="block text-xs font-medium text-gray-700 mb-1">Voice</label>
+          <label htmlFor="voice-select" className="block text-xs font-medium text-gray-300 mb-1">Voice</label>
           <select
             id="voice-select"
             value={voiceParams.voiceURI}
             onChange={(e) => handleVoiceParamChange('voiceURI', e.target.value)}
-            className="w-full text-sm rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            className="w-full text-sm rounded-md border-gray-700 bg-gray-700 text-gray-100 shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
           >
             {availableVoices.map((voice) => (
               <option key={voice.voiceURI} value={voice.voiceURI}>
@@ -49,10 +49,10 @@ export default function VoiceSettings({
         {/* Rate Slider */}
         <div>
           <div className="flex justify-between items-center mb-1">
-            <label htmlFor="rate-slider" className="block text-xs font-medium text-gray-700">Speed: {voiceParams.rate.toFixed(1)}x</label>
+            <label htmlFor="rate-slider" className="block text-xs font-medium text-gray-300">Speed: {voiceParams.rate.toFixed(1)}x</label>
             <button 
               onClick={() => handleVoiceParamChange('rate', 1.0)}
-              className="text-xs text-blue-600 hover:text-blue-800"
+              className="text-xs text-cyan-400 hover:text-cyan-300 transition-colors"
             >
               Reset
             </button>
@@ -65,9 +65,9 @@ export default function VoiceSettings({
             step="0.1"
             value={voiceParams.rate}
             onChange={(e) => handleVoiceParamChange('rate', parseFloat(e.target.value))}
-            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+            className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
           />
-          <div className="flex justify-between text-xs text-gray-500">
+          <div className="flex justify-between text-xs text-gray-400">
             <span>Slow</span>
             <span>Fast</span>
           </div>
@@ -76,10 +76,10 @@ export default function VoiceSettings({
         {/* Pitch Slider */}
         <div>
           <div className="flex justify-between items-center mb-1">
-            <label htmlFor="pitch-slider" className="block text-xs font-medium text-gray-700">Pitch: {voiceParams.pitch.toFixed(1)}</label>
+            <label htmlFor="pitch-slider" className="block text-xs font-medium text-gray-300">Pitch: {voiceParams.pitch.toFixed(1)}</label>
             <button 
               onClick={() => handleVoiceParamChange('pitch', 1.0)}
-              className="text-xs text-blue-600 hover:text-blue-800"
+              className="text-xs text-cyan-400 hover:text-cyan-300 transition-colors"
             >
               Reset
             </button>
@@ -92,9 +92,9 @@ export default function VoiceSettings({
             step="0.1"
             value={voiceParams.pitch}
             onChange={(e) => handleVoiceParamChange('pitch', parseFloat(e.target.value))}
-            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+            className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
           />
-          <div className="flex justify-between text-xs text-gray-500">
+          <div className="flex justify-between text-xs text-gray-400">
             <span>Low</span>
             <span>High</span>
           </div>
@@ -103,10 +103,10 @@ export default function VoiceSettings({
         {/* Volume Slider */}
         <div>
           <div className="flex justify-between items-center mb-1">
-            <label htmlFor="volume-slider" className="block text-xs font-medium text-gray-700">Volume: {Math.round(voiceParams.volume * 100)}%</label>
+            <label htmlFor="volume-slider" className="block text-xs font-medium text-gray-300">Volume: {Math.round(voiceParams.volume * 100)}%</label>
             <button 
               onClick={() => handleVoiceParamChange('volume', 1.0)}
-              className="text-xs text-blue-600 hover:text-blue-800"
+              className="text-xs text-cyan-400 hover:text-cyan-300 transition-colors"
             >
               Reset
             </button>
@@ -119,9 +119,9 @@ export default function VoiceSettings({
             step="0.1"
             value={voiceParams.volume}
             onChange={(e) => handleVoiceParamChange('volume', parseFloat(e.target.value))}
-            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+            className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
           />
-          <div className="flex justify-between text-xs text-gray-500">
+          <div className="flex justify-between text-xs text-gray-400">
             <span>Quiet</span>
             <span>Loud</span>
           </div>
@@ -130,7 +130,7 @@ export default function VoiceSettings({
         {/* Test Voice Button */}
         <button
           onClick={testVoice}
-          className="w-full py-1.5 bg-blue-500 text-white text-sm rounded-md hover:bg-blue-600 transition-colors"
+          className="w-full py-2 bg-cyan-600 text-white text-sm rounded-md hover:bg-cyan-700 transition-colors"
         >
           Test Voice
         </button>

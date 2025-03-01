@@ -17,10 +17,26 @@ export function useAIProcessing() {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [transcription, setTranscription] = useState('');
   const [isProcessingText, setIsProcessingText] = useState(false);
+  const [streamingResponse, setStreamingResponse] = useState('');
+  
+  // Refs to manage streaming and intervals
+  const streamIntervalRef = useRef(null);
+  const currentResponseRef = useRef('');
+  const isStreamingRef = useRef(false);
   
   // Initialize Gemini API
   const genAI = useRef(null);
   const model = useRef(null);
+  
+  // Clean up intervals on unmount
+  useEffect(() => {
+    return () => {
+      stopSpeaking();
+      if (streamIntervalRef.current) {
+        clearInterval(streamIntervalRef.current);
+      }
+    };
+  }, []);
   
   useEffect(() => {
     // Initialize Gemini API if API key is available
@@ -29,10 +45,6 @@ export function useAIProcessing() {
       genAI.current = new GoogleGenerativeAI(apiKey);
       model.current = genAI.current.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
     }
-    
-    return () => {
-      stopSpeaking();
-    };
   }, []);
   
   const uploadAudio = async (fileToUpload = null, transcriptText = '', voiceParams = {}) => {
@@ -147,23 +159,14 @@ Please respond as if you are speaking to the caller directly. Keep your response
         isAudio: true 
       };
       
-      // Add AI response to conversation history
-      const aiMessage = { role: 'assistant', content: responseText };
+      // Add AI response to conversation history with streaming flag
+      const aiMessage = { role: 'assistant', content: responseText, isStreaming: true };
       setConversationHistory(prev => [...prev, userMessage, aiMessage]);
       
       setAiResponse(responseText);
       
-      // Speak the response with voice parameters
-      setIsSpeaking(true);
-      speakText(responseText, 
-        () => {
-          setIsSpeaking(false);
-        },
-        () => {
-          setIsSpeaking(true);
-        },
-        voiceParams
-      );
+      // Stream the response text character by character
+      streamTextWithVoice(responseText, voiceParams);
       
       return responseText;
     } catch (err) {
@@ -231,23 +234,14 @@ Respond as if you are speaking to the caller directly. Keep your response brief,
       // Add user message to conversation history
       const userMessage = { role: 'user', content: transcript };
       
-      // Add AI response to conversation history
-      const aiMessage = { role: 'assistant', content: responseText };
+      // Add AI response to conversation history with streaming flag
+      const aiMessage = { role: 'assistant', content: responseText, isStreaming: true };
       setConversationHistory(prev => [...prev, userMessage, aiMessage]);
       
       setAiResponse(responseText);
       
-      // Speak the response with voice parameters
-      setIsSpeaking(true);
-      speakText(responseText, 
-        () => {
-          setIsSpeaking(false);
-        },
-        () => {
-          setIsSpeaking(true);
-        },
-        voiceParams
-      );
+      // Stream the response text character by character
+      streamTextWithVoice(responseText, voiceParams);
       
       return responseText;
     } catch (err) {
@@ -314,23 +308,14 @@ Respond as if you are speaking to the caller directly. Keep your response brief,
         console.error("Invalid response:", result);
       }
       
-      // Add AI response to conversation history
-      const aiMessage = { role: 'assistant', content: responseText };
+      // Add AI response to conversation history with streaming flag
+      const aiMessage = { role: 'assistant', content: responseText, isStreaming: true };
       setConversationHistory(prev => [...prev, aiMessage]);
       
       setAiResponse(responseText);
       
-      // Speak the response with voice parameters
-      setIsSpeaking(true);
-      speakText(responseText, 
-        () => {
-          setIsSpeaking(false);
-        },
-        () => {
-          setIsSpeaking(true);
-        },
-        voiceParams
-      );
+      // Stream the response text character by character
+      streamTextWithVoice(responseText, voiceParams);
       
       return responseText;
     } catch (err) {
@@ -342,6 +327,67 @@ Respond as if you are speaking to the caller directly. Keep your response brief,
     }
   };
   
+  // Function to stream text with voice
+  const streamTextWithVoice = (text, voiceParams) => {
+    // Clear any existing streaming
+    if (streamIntervalRef.current) {
+      clearInterval(streamIntervalRef.current);
+      streamIntervalRef.current = null;
+    }
+    
+    // Reset streaming state
+    setStreamingResponse('');
+    currentResponseRef.current = '';
+    isStreamingRef.current = true;
+    setIsSpeaking(true);
+    
+    // Start speaking the text with voice parameters
+    speakText(text, 
+      () => {
+        // On speech end
+        setIsSpeaking(false);
+        isStreamingRef.current = false;
+        
+        // Make sure the full text is displayed
+        setStreamingResponse(text);
+        
+        // Update the conversation history to remove streaming flag
+        setConversationHistory(prev => 
+          prev.map(msg => 
+            msg.isStreaming ? { ...msg, isStreaming: false } : msg
+          )
+        );
+        
+        // Clear interval if it's still running
+        if (streamIntervalRef.current) {
+          clearInterval(streamIntervalRef.current);
+          streamIntervalRef.current = null;
+        }
+      },
+      () => {
+        // On speech start
+        setIsSpeaking(true);
+      },
+      voiceParams
+    );
+    
+    // Stream the text character by character
+    let index = 0;
+    const streamSpeed = 30; // Adjust speed as needed (lower = faster)
+    
+    streamIntervalRef.current = setInterval(() => {
+      if (index < text.length && isStreamingRef.current) {
+        currentResponseRef.current += text[index];
+        setStreamingResponse(currentResponseRef.current);
+        index++;
+      } else {
+        // If we've reached the end of the text or streaming was stopped
+        clearInterval(streamIntervalRef.current);
+        streamIntervalRef.current = null;
+      }
+    }, streamSpeed);
+  };
+  
   return {
     aiResponse,
     isProcessing,
@@ -351,6 +397,7 @@ Respond as if you are speaking to the caller directly. Keep your response brief,
     isSpeaking,
     transcription,
     isProcessingText,
+    streamingResponse,
     uploadAudio,
     processTranscript,
     processTextInput,

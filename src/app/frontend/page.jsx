@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { Home } from "./components/Home";
-import { Info } from "./components/Info";
+import Info from "./components/Info";
 import Search from "./components/Search";
 import { Report } from "./components/Report";
 import Defense from "./components/Defense";

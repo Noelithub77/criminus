@@ -14,11 +14,11 @@ export default function CallControls({
   inputMode
 }) {
   return (
-    <div className="bg-gray-100 p-4 flex justify-center items-center gap-6 border-t border-gray-200">
+    <div className="bg-gray-900 p-4 flex justify-center items-center gap-6 border-t border-gray-700">
       {callStatus === 'idle' && (
         <button
           onClick={initiateCall}
-          className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center text-white hover:bg-green-600 shadow-md"
+          className="w-16 h-16 bg-cyan-600 rounded-full flex items-center justify-center text-white hover:bg-cyan-700 shadow-lg transition-colors"
           aria-label="Start call"
         >
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8">
@@ -31,7 +31,7 @@ export default function CallControls({
         <>
           <button
             onClick={endCall}
-            className="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center text-white hover:bg-red-600 shadow-md"
+            className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center text-white hover:bg-red-700 shadow-lg transition-colors"
             aria-label="End call"
           >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8">
@@ -42,11 +42,11 @@ export default function CallControls({
           {inputMode === 'unified' && !isRecording && callStatus === 'connected' && (
             <button
               onClick={startRecording}
-              className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center text-white hover:bg-blue-600 shadow-md relative overflow-hidden group"
+              className="w-16 h-16 bg-cyan-600 rounded-full flex items-center justify-center text-white hover:bg-cyan-700 shadow-lg transition-colors relative overflow-hidden group"
               aria-label="Start recording"
             >
               {/* Pulsing circle animation */}
-              <div className="absolute inset-0 bg-blue-400 opacity-50 rounded-full scale-0 group-hover:scale-100 transition-transform duration-700"></div>
+              <div className="absolute inset-0 bg-cyan-500 opacity-50 rounded-full scale-0 group-hover:scale-100 transition-transform duration-700"></div>
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8 relative z-10">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" />
               </svg>
@@ -56,11 +56,11 @@ export default function CallControls({
           {inputMode === 'unified' && isRecording && (
             <button
               onClick={stopRecording}
-              className="w-16 h-16 bg-yellow-500 rounded-full flex items-center justify-center text-white hover:bg-yellow-600 shadow-md relative overflow-hidden"
+              className="w-16 h-16 bg-amber-500 rounded-full flex items-center justify-center text-white hover:bg-amber-600 shadow-lg transition-colors relative overflow-hidden"
               aria-label="Stop recording"
             >
               {/* Recording animation */}
-              <div className="absolute inset-0 bg-yellow-400 opacity-30 rounded-full animate-ping"></div>
+              <div className="absolute inset-0 bg-amber-400 opacity-30 rounded-full animate-ping"></div>
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8 relative z-10">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 7.5A2.25 2.25 0 0 1 7.5 5.25h9a2.25 2.25 0 0 1 2.25 2.25v9a2.25 2.25 0 0 1-2.25 2.25h-9a2.25 2.25 0 0 1-2.25-2.25v-9Z" />
               </svg>
@@ -72,7 +72,7 @@ export default function CallControls({
       {callStatus === 'ended' && (
         <button
           onClick={resetCall}
-          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 shadow-md"
+          className="px-6 py-3 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 shadow-lg transition-colors"
         >
           New Call
         </button>

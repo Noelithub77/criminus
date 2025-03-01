@@ -1,14 +1,14 @@
 import React, { useState, useRef, useEffect } from "react";
-import { ArrowUpCircle } from "react-feather";
+import { ArrowUpCircle, MessageCircle } from "react-feather";
 import { useResponsive } from "../hooks/useResponsive";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 
-const Search = () => {
+const Chatbot = () => {
   const [isFocused, setIsFocused] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [chatQuery, setCharQuery] = useState("");
   const [selectedSuggestion, setSelectedSuggestion] = useState(-1);
-  const searchContainerRef = useRef(null);
-  const searchInputRef = useRef(null);
+  const chatContainerRef = useRef(null);
+  const chatInputRef = useRef(null);
   const suggestionsRef = useRef(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const { isMobile, isTablet, isDesktop, isLargeDesktop } = useResponsive();
@@ -18,7 +18,7 @@ const Search = () => {
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
-  const recentSearches = [
+  const suggestedQuestions = [
     "How can I protect myself from cyber crimes?",
     "What is deepfake fraud, and how is it used in crime?",
     "What are the latest financial crimes and scams?",
@@ -26,14 +26,14 @@ const Search = () => {
     "What should I do if I'm a victim of identity theft?",
   ];
 
-  // Generate suggestions based on search query
+  // Generate suggestions based on chat query
   const getSuggestions = () => {
-    if (!searchQuery) return [];
+    if (!chatQuery) return [];
     
     return [
-      `How to prevent ${searchQuery}?`,
-      `Latest news about ${searchQuery}`,
-      `Report ${searchQuery} incident`
+      `How to prevent ${chatQuery}?`,
+      `Latest news about ${chatQuery}`,
+      `Report ${chatQuery} incident`
     ];
   };
   
@@ -42,8 +42,8 @@ const Search = () => {
   // Handle mouse movement for dynamic glow effect
   useEffect(() => {
     const handleMouseMove = (e) => {
-      if (searchContainerRef.current) {
-        const rect = searchContainerRef.current.getBoundingClientRect();
+      if (chatContainerRef.current) {
+        const rect = chatContainerRef.current.getBoundingClientRect();
         setMousePosition({
           x: e.clientX - rect.left,
           y: e.clientY - rect.top,
@@ -83,12 +83,12 @@ const Search = () => {
     // Enter key
     else if (e.key === "Enter" && selectedSuggestion >= 0) {
       e.preventDefault();
-      setSearchQuery(suggestions[selectedSuggestion]);
+      setCharQuery(suggestions[selectedSuggestion]);
       setSelectedSuggestion(-1);
     }
     // Escape key
     else if (e.key === "Escape") {
-      searchInputRef.current.blur();
+      chatInputRef.current.blur();
       setIsFocused(false);
       setSelectedSuggestion(-1);
     }
@@ -118,37 +118,37 @@ const Search = () => {
       return;
     }
     
-    if (!searchQuery) {
+    if (!chatQuery) {
       setIsFocused(false);
     }
     setSelectedSuggestion(-1);
   };
 
-  const handleSearchItemClick = (search) => {
-    setSearchQuery(search);
+  const handleQuestionClick = (question) => {
+    setCharQuery(question);
     setIsFocused(true);
-    if (searchInputRef.current) {
-      searchInputRef.current.focus();
+    if (chatInputRef.current) {
+      chatInputRef.current.focus();
     }
   };
 
   const handleSuggestionClick = (suggestion) => {
-    setSearchQuery(suggestion);
-    if (searchInputRef.current) {
-      searchInputRef.current.focus();
+    setCharQuery(suggestion);
+    if (chatInputRef.current) {
+      chatInputRef.current.focus();
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (searchQuery.trim()) {
+    if (chatQuery.trim()) {
       try {
         // Add user message to chat
-        const userMessage = { role: 'user', content: searchQuery };
+        const userMessage = { role: 'user', content: chatQuery };
         setMessages(prev => [...prev, userMessage]);
         
         // Clear input and show loading state
-        setSearchQuery("");
+        setCharQuery("");
         setIsLoading(true);
         
         // Initialize LangChain's Google Genai model
@@ -159,7 +159,7 @@ const Search = () => {
         });
         
         // Get response from the model
-        const response = await model.invoke(searchQuery);
+        const response = await model.invoke(chatQuery);
         
         // Add AI response to chat
         const aiMessage = { role: 'assistant', content: response.content };
@@ -179,56 +179,35 @@ const Search = () => {
   };
 
   return (
-    <div className="search-page">
-      <a href="#search-form" className="skip-to-content">
+    <div className="chat-page">
+      <a href="#chat-form" className="skip-to-content">
         Skip to chat form
       </a>
       
-      <div className={`search-container ${isDesktop || isLargeDesktop ? 'desktop-layout' : ''}`}>
-        <h2 className="search-title">Chat with J.Ethical</h2>
+      <div className={`chat-container ${isDesktop || isLargeDesktop ? 'desktop-layout' : ''}`}>
+        <h2 className="chat-title">Chat with J.Ethical</h2>
         
         {messages.length === 0 && (
-          <div className={`recent-searches ${isFocused ? 'minimized' : ''}`}>
-            <h3 className="recent-searches-title">Suggested Questions</h3>
-            {recentSearches.map((search, index) => (
+          <div className={`suggested-questions ${isFocused ? 'minimized' : ''}`}>
+            <h3 className="suggested-questions-title">Suggested Questions</h3>
+            {suggestedQuestions.map((question, index) => (
               <div 
                 key={index} 
-                className="search-item"
-                onClick={() => handleSearchItemClick(search)}
+                className="question-item"
+                onClick={() => handleQuestionClick(question)}
                 tabIndex={0}
                 role="button"
-                aria-label={`Ask about ${search}`}
+                aria-label={`Ask about ${question}`}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
-                    handleSearchItemClick(search);
+                    handleQuestionClick(question);
                   }
                 }}
               >
-                <div className="search-item-icon">
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M11 19C15.4183 19 19 15.4183 19 11C19 6.58172 15.4183 3 11 3C6.58172 3 3 6.58172 3 11C3 15.4183 6.58172 19 11 19Z"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M21 21L16.65 16.65"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
+                <div className="question-item-icon">
+                  <MessageCircle size={16} />
                 </div>
-                <span className="search-item-text">{search}</span>
+                <span className="question-item-text">{question}</span>
               </div>
             ))}
           </div>
@@ -277,62 +256,41 @@ const Search = () => {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="search-form" id="search-form">
+        <form onSubmit={handleSubmit} className="chat-form" id="chat-form">
           <div
-            className={`search-wrapper ${isFocused ? "active" : ""}`}
-            ref={searchContainerRef}
+            className={`chat-wrapper ${isFocused ? "active" : ""}`}
+            ref={chatContainerRef}
             style={{
               "--mouse-x": `${mousePosition.x}px`,
               "--mouse-y": `${mousePosition.y}px`,
             }}
           >
             <div className="liquid-glow"></div>
-            <div className="search-bar">
-              <div className="search-icon">
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M11 19C15.4183 19 19 15.4183 19 11C19 6.58172 15.4183 3 11 3C6.58172 3 3 6.58172 3 11C3 15.4183 6.58172 19 11 19Z"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <path
-                    d="M21 21L16.65 16.65"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
+            <div className="chat-bar">
+              <div className="chat-icon">
+                <MessageCircle size={20} />
               </div>
               <input
                 type="text"
                 placeholder={isMobile ? "Ask me anything..." : "What would you like to know about crime prevention?"}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                value={chatQuery}
+                onChange={(e) => setCharQuery(e.target.value)}
                 onFocus={handleFocus}
                 onBlur={handleBlur}
                 onKeyDown={handleKeyDown}
-                className="search-input"
-                ref={searchInputRef}
+                className="chat-input"
+                ref={chatInputRef}
                 aria-label="Chat input"
                 aria-autocomplete="list"
-                aria-controls="search-suggestions"
-                aria-expanded={isFocused && searchQuery ? "true" : "false"}
+                aria-controls="chat-suggestions"
+                aria-expanded={isFocused && chatQuery ? "true" : "false"}
                 disabled={isLoading}
               />
               <button 
                 type="submit" 
                 className="send-button"
                 aria-label="Send message"
-                disabled={isLoading || !searchQuery.trim()}
+                disabled={isLoading || !chatQuery.trim()}
               >
                 <ArrowUpCircle />
               </button>
@@ -340,11 +298,11 @@ const Search = () => {
           </div>
         </form>
 
-        {isFocused && searchQuery && (
+        {isFocused && chatQuery && (
           <div 
-            className="search-suggestions" 
+            className="chat-suggestions" 
             ref={suggestionsRef}
-            id="search-suggestions"
+            id="chat-suggestions"
             role="listbox"
           >
             <h3 className="suggestions-title">Suggested Questions</h3>
@@ -378,6 +336,38 @@ const Search = () => {
       </div>
       
       <style jsx>{`
+        .chat-page {
+          /* Reusing existing styles but with updated class names */
+        }
+        
+        .chat-container {
+          /* Reusing existing styles but with updated class names */
+        }
+        
+        .chat-title {
+          /* Reusing existing styles but with updated class names */
+        }
+        
+        .suggested-questions {
+          /* Reusing existing styles from recent-searches */
+        }
+        
+        .suggested-questions-title {
+          /* Reusing existing styles from recent-searches-title */
+        }
+        
+        .question-item {
+          /* Reusing existing styles from search-item */
+        }
+        
+        .question-item-icon {
+          /* Reusing existing styles from search-item-icon */
+        }
+        
+        .question-item-text {
+          /* Reusing existing styles from search-item-text */
+        }
+        
         .chat-messages {
           display: flex;
           flex-direction: column;
@@ -481,4 +471,4 @@ const Search = () => {
   );
 };
 
-export default Search;
+export default Chatbot;
