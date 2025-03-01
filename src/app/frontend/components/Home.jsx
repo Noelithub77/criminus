@@ -154,6 +154,34 @@ export function Home() {
 
               <div
                 className="feature-card"
+                onClick={() => window.open('http://localhost:5000', '_blank')}
+                style={{ cursor: "pointer" }}
+              >
+                <div className="feature-icon">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+                  </svg>
+                </div>
+                <div className="feature-details">
+                  <h3>Gender Detection & Safety</h3>
+                  <p>
+                    AI-powered real-time gender detection and safety monitoring system with advanced alerts
+                  </p>
+                </div>
+              </div>
+
+              <div
+                className="feature-card"
                 onClick={handleChildSafetyClick}
                 style={{ cursor: "pointer" }}
               >
