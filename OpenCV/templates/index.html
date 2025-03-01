@@ -190,12 +190,158 @@
                 width: 100%;
             }
         }
+
+        /* New styles for demo section */
+        .demo-section {
+            background-color: var(--bg-secondary);
+            padding: 2rem;
+            border-radius: 1rem;
+            margin: 2rem 0;
+        }
+
+        .demo-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .demo-card {
+            background-color: var(--bg-primary);
+            border-radius: 0.8rem;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+
+        .demo-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .demo-thumbnail {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-bottom: 2px solid var(--accent);
+        }
+
+        .demo-content {
+            padding: 1.5rem;
+        }
+
+        .demo-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--accent);
+        }
+
+        .demo-description {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .demo-features {
+            list-style: none;
+            margin-bottom: 1rem;
+        }
+
+        .demo-features li {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+
+        .demo-features li::before {
+            content: "✓";
+            color: var(--success);
+        }
+
+        .demo-button {
+            width: 100%;
+            margin-top: 1rem;
+        }
+
+        .feature-tag {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background-color: rgba(99, 102, 241, 0.1);
+            color: var(--accent);
+            border-radius: 1rem;
+            font-size: 0.8rem;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Safety Detection System</h1>
+        <h1>AI-Powered Gender Detection & Safety System</h1>
         
+        <!-- Demo Section -->
+        <div class="demo-section">
+            <div class="demo-header">
+                <h2>Explore Our Capabilities</h2>
+                <p style="color: var(--text-secondary); margin-top: 0.5rem;">
+                    See how our AI system detects gender and monitors safety in real-time
+                </p>
+            </div>
+            
+            <div class="demo-grid">
+                <!-- Demo 1: Basic Gender Detection -->
+                <div class="demo-card">
+                    <div class="demo-content">
+                        <div class="demo-title">Basic Gender Detection</div>
+                        <div class="demo-description">
+                            Experience our core gender detection technology in action
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <span class="feature-tag">Real-time</span>
+                            <span class="feature-tag">High Accuracy</span>
+                        </div>
+                        <ul class="demo-features">
+                            <li>Face Detection</li>
+                            <li>Gender Classification</li>
+                            <li>Confidence Scoring</li>
+                        </ul>
+                        <button class="demo-button" onclick="loadDemo('video.mp4', 'basic')">
+                            Watch Demo
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Demo 2: Advanced Safety System -->
+                <div class="demo-card">
+                    <div class="demo-content">
+                        <div class="demo-title">Safety Monitoring System</div>
+                        <div class="demo-description">
+                            Advanced safety detection with real-time alerts
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <span class="feature-tag">AI-Powered</span>
+                            <span class="feature-tag">Alert System</span>
+                        </div>
+                        <ul class="demo-features">
+                            <li>Safety Analysis</li>
+                            <li>Real-time Alerts</li>
+                            <li>Continuous Monitoring</li>
+                        </ul>
+                        <button class="demo-button" onclick="loadDemo('video2.mp4', 'safety')">
+                            Watch Demo
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="tab-buttons">
             <button class="tab-button active" onclick="switchMode('safety')">Safety Detection</button>
             <button class="tab-button" onclick="switchMode('basic')">Basic Gender Detection</button>
@@ -248,6 +394,49 @@
                     hideAlert();
                 }
             }
+        }
+
+        function loadDemo(videoFile, mode) {
+            // Switch to appropriate mode
+            currentMode = mode;
+            const buttons = document.querySelectorAll('.tab-button');
+            buttons.forEach(btn => {
+                if (btn.textContent.toLowerCase().includes(mode)) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+
+            // Generate unique session ID for this demo
+            sessionId = `demo_${Date.now()}`;
+            
+            // Show loading state
+            videoFeed.src = '';
+            videoFeed.alt = 'Loading demo...';
+            
+            // Set the video source based on mode
+            if (mode === 'safety') {
+                const feedUrl = `{{ url_for('video_feed') }}?session_id=${sessionId}&demo=${videoFile}`;
+                console.log('Loading safety demo:', feedUrl);
+                videoFeed.src = feedUrl;
+                startAlertCheck();
+            } else {
+                const feedUrl = `{{ url_for('video_feed_basic') }}?demo=${videoFile}`;
+                console.log('Loading basic demo:', feedUrl);
+                videoFeed.src = feedUrl;
+                stopAlertCheck();
+                hideAlert();
+            }
+            
+            // Add error handling for video feed
+            videoFeed.onerror = function() {
+                console.error('Error loading video feed');
+                alert('Error loading demo video');
+                videoFeed.alt = 'Error loading demo';
+            };
+            
+            isWebcamActive = false;
         }
 
         function startWebcam() {
