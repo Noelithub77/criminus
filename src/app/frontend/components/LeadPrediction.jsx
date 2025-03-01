@@ -3,51 +3,8 @@ import { ArrowUpCircle, Search, Info, X, MessageSquare } from "react-feather";
 import { useResponsive } from "../hooks/useResponsive";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import ReactMarkdown from 'react-markdown';
-import mermaid from 'mermaid';
 // Import CSS
 import './LeadPrediction.css';
-
-// Create a safe mermaid initialization function
-const initializeMermaid = () => {
-  if (typeof window === 'undefined') return; // Skip on server-side
-  
-  try {
-    mermaid.initialize({
-      startOnLoad: false, // We'll manually render diagrams
-      theme: 'dark',
-      securityLevel: 'loose',
-      fontFamily: 'Inter, sans-serif',
-      flowchart: {
-        htmlLabels: true,
-        curve: 'basis',
-        useMaxWidth: false,
-        padding: 15
-      },
-      themeVariables: {
-        primaryColor: '#3b82f6',
-        primaryTextColor: '#ffffff',
-        primaryBorderColor: '#3b82f6',
-        lineColor: '#aaaaaa',
-        secondaryColor: '#006100',
-        tertiaryColor: '#202020'
-      },
-      logLevel: 5 // This will silence non-critical errors
-    });
-    console.log('Mermaid initialized successfully');
-  } catch (error) {
-    console.error('Failed to initialize mermaid:', error);
-  }
-};
-
-// Initialize mermaid only on client-side
-if (typeof window !== 'undefined') {
-  // Delay initialization to ensure document is fully loaded
-  if (document.readyState === 'complete') {
-    initializeMermaid();
-  } else {
-    window.addEventListener('load', initializeMermaid);
-  }
-}
 
 // Dedicated component for Mermaid diagrams
 const MermaidDiagram = ({ chart, title }) => {
@@ -55,67 +12,89 @@ const MermaidDiagram = ({ chart, title }) => {
   const [error, setError] = useState(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const containerRef = useRef(null);
-  const id = useRef(`mermaid-${Math.random().toString(36).substring(2, 11)}`).current;
+  const uniqueId = useRef(`mermaid-${Math.random().toString(36).substring(2, 11)}`).current;
 
   // Extract title from the first line of the chart if not provided
-  const diagramTitle = title || (chart.split('\n')[0].startsWith('%%') ? 
+  const diagramTitle = title || (chart?.split('\n')[0]?.startsWith('%%') ? 
     chart.split('\n')[0].replace('%%', '').trim() : 'Workflow Diagram');
 
-  // Check if we're in the browser environment
+  // Only run on client-side
   useEffect(() => {
     setIsClient(true);
   }, []);
 
+  // Render the diagram when we're on the client
   useEffect(() => {
-    // Only run on client-side and when we have chart data
     if (!isClient || !chart) return;
     
+    let isMounted = true;
+    setIsLoading(true);
+    
+    // Use dynamic import to load mermaid only on client-side
     const renderDiagram = async () => {
       try {
-        // Configure mermaid with cute colors for this specific diagram
-        const config = {
-          theme: 'default',
-          themeVariables: {
-            primaryColor: '#6366f1',
-            primaryTextColor: '#ffffff',
-            primaryBorderColor: '#818cf8',
-            lineColor: '#a5b4fc',
-            secondaryColor: '#f472b6',
-            tertiaryColor: '#fef3f2',
-            fontSize: '16px'
-          },
+        // Dynamic import
+        const mermaidModule = await import('mermaid');
+        const mermaid = mermaidModule.default;
+        
+        // Initialize mermaid with configuration
+        mermaid.initialize({
+          startOnLoad: false,
+          theme: 'dark',
+          securityLevel: 'loose', // Required for rendering
+          fontFamily: 'Inter, sans-serif',
           flowchart: {
-            curve: 'basis',
             htmlLabels: true,
+            curve: 'basis',
+            useMaxWidth: false,
             padding: 15
           },
-          securityLevel: 'loose',
-          startOnLoad: false
-        };
-
+          themeVariables: {
+            primaryColor: '#3b82f6',
+            primaryTextColor: '#ffffff',
+            primaryBorderColor: '#3b82f6',
+            lineColor: '#aaaaaa',
+            secondaryColor: '#006100',
+            tertiaryColor: '#202020'
+          },
+          logLevel: 5 // Silence non-critical errors
+        });
+        
         // Remove title comment if present
         const cleanChart = chart.startsWith('%%') ? 
           chart.split('\n').slice(1).join('\n') : chart;
         
-        // Use mermaid.parse to validate the diagram syntax first
-        await mermaid.parse(cleanChart);
+        // Create a temporary container for rendering
+        const tempContainer = document.createElement('div');
+        tempContainer.style.display = 'none';
+        document.body.appendChild(tempContainer);
         
-        // If parsing succeeds, render the diagram
-        const { svg } = await mermaid.render(id, cleanChart, config);
+        // Use mermaid.render instead of relying on contentLoaded
+        const { svg } = await mermaid.render(uniqueId, cleanChart);
         
-        // Make the SVG more visually appealing
+        // Clean up the temporary container
+        document.body.removeChild(tempContainer);
+        
+        // Enhance SVG for better visuals
         const enhancedSvg = svg
           .replace(/stroke-width="1"/g, 'stroke-width="2"')
           .replace(/font-size="14px"/g, 'font-size="16px"')
           .replace(/font-family="sans-serif"/g, 'font-family="Inter, sans-serif"');
         
-        setSvg(enhancedSvg);
-        setError(null);
+        if (isMounted) {
+          setSvg(enhancedSvg);
+          setError(null);
+          setIsLoading(false);
+        }
       } catch (err) {
         console.error("Mermaid error:", err);
-        setError(err.message || "Failed to process diagram");
-        setSvg(''); // Clear any previous SVG
+        if (isMounted) {
+          setError(err.message || "Failed to process diagram");
+          setSvg(''); // Clear any previous SVG
+          setIsLoading(false);
+        }
       }
     };
 
@@ -124,15 +103,25 @@ const MermaidDiagram = ({ chart, title }) => {
       renderDiagram();
     }, 100);
 
-    return () => clearTimeout(timer);
-  }, [chart, id, isClient]);
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+      // Clean up any elements that might have been created
+      if (typeof document !== 'undefined') {
+        const tempElement = document.getElementById(uniqueId);
+        if (tempElement) {
+          tempElement.remove();
+        }
+      }
+    };
+  }, [chart, uniqueId, isClient]);
 
   const toggleFullscreen = () => {
     setIsFullscreen(!isFullscreen);
   };
 
-  // Show loading state when rendering
-  if (!isClient) {
+  // Show loading state when on server or still rendering
+  if (!isClient || isLoading) {
     return (
       <div className="mermaid-wrapper">
         <div className="mermaid-title">{diagramTitle}</div>
