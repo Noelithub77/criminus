@@ -3,13 +3,13 @@ import React from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import ChildSafety from "./ChildSafety";
-import AnonymousReporting from "./AnonymousReporting";
+import LeadPrediction from "./LeadPrediction";
 import Heatmap from "./Heatmap";
 import Image from "next/image";
 
 export function Home() {
   const [showChildSafety, setShowChildSafety] = useState(false);
-  const [showAnonymousReporting, setShowAnonymousReporting] = useState(false);
+  const [showLeadPrediction, setShowLeadPrediction] = useState(false);
   const [showHeatmap, setShowHeatmap] = useState(false);
   const router = useRouter();
 
@@ -17,15 +17,17 @@ export function Home() {
     setShowChildSafety(true);
   };
 
-  const handleAnonymousReportingClick = () => {
-    setShowAnonymousReporting(true);
+  const handleLeadPredictionClick = () => {
+    setShowLeadPrediction(true);
   };
+  
   const handleHeatmapClick = () => {
     setShowHeatmap(true);
   };
+  
   const handleBackClick = () => {
     setShowChildSafety(false);
-    setShowAnonymousReporting(false);
+    setShowLeadPrediction(false);
     setShowHeatmap(false);
   };
 
@@ -70,7 +72,7 @@ export function Home() {
           </div>
           <ChildSafety />
         </div>
-      ) : showAnonymousReporting ? (
+      ) : showLeadPrediction ? (
         <div>
           <div className="back-button-container" style={{ margin: "20px 0" }}>
             <button
@@ -103,7 +105,7 @@ export function Home() {
               Back to Home
             </button>
           </div>
-          <AnonymousReporting />
+          <LeadPrediction />
         </div>
       ) : showHeatmap ? (
         <div>
@@ -174,17 +176,16 @@ export function Home() {
 
               <div
                 className="feature-card"
-                onClick={handleAnonymousReportingClick}
+                onClick={handleLeadPredictionClick}
                 style={{ cursor: "pointer" }}
               >
                 <div className="feature-icon">
-                  <img src="/assets/report.svg" />
+                  <img src="/assets/lead_prediction.svg" />
                 </div>
                 <div className="feature-details">
-                  <h3>Anonymous Reporting</h3>
+                  <h3>Lead Prediction</h3>
                   <p>
-                    Report crimes and suspicious activities without revealing
-                    your identity
+                    Analyze text for criminal patterns with interactive flowcharts, diagrams, and structured insights for investigations
                   </p>
                 </div>
               </div>

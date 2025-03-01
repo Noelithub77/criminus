@@ -3,184 +3,245 @@ import { ArrowUpCircle, Search, Info, X, MessageSquare } from "react-feather";
 import { useResponsive } from "../hooks/useResponsive";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import ReactMarkdown from 'react-markdown';
+import ReactDOM from 'react-dom';
 // Import CSS
 import './LeadPrediction.css';
 
 // Dedicated component for Mermaid diagrams
-const MermaidDiagram = ({ chart, title }) => {
-  const [svg, setSvg] = useState('');
+const MermaidDiagram = ({ chart }) => {
+  const [svgContent, setSvgContent] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isClient, setIsClient] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const containerRef = useRef(null);
-  const uniqueId = useRef(`mermaid-${Math.random().toString(36).substring(2, 11)}`).current;
-
-  // Extract title from the first line of the chart if not provided
-  const diagramTitle = title || (chart?.split('\n')[0]?.startsWith('%%') ? 
-    chart.split('\n')[0].replace('%%', '').trim() : 'Workflow Diagram');
-
-  // Only run on client-side
+  const [zoomLevel, setZoomLevel] = useState(1.2); // Default zoom level
+  const diagramId = useRef(`mermaid-${Math.random().toString(36).substring(2, 11)}`);
+  const fullscreenContainerRef = useRef(null);
+  
+  // Extract title from chart if available (using %% Title: My Title %% syntax)
+  const titleMatch = chart.match(/%%\s*Title:\s*(.*?)\s*%%/);
+  const title = titleMatch ? titleMatch[1] : 'Diagram';
+  
+  // Set client-side flag
   useEffect(() => {
     setIsClient(true);
   }, []);
-
-  // Render the diagram when we're on the client
+  
+  // Handle fullscreen mode
+  useEffect(() => {
+    if (!isClient) return;
+    
+    const handleKeyPress = (e) => {
+      if (!isFullscreen) return;
+      
+      // Handle Escape key to exit fullscreen
+      if (e.key === 'Escape') {
+        setIsFullscreen(false);
+        return;
+      }
+      
+      // Handle zoom with + and - keys
+      if (e.key === '+' || e.key === '=') {
+        setZoomLevel(prev => Math.min(prev + 0.2, 3)); // Max zoom 3x
+        e.preventDefault();
+      } else if (e.key === '-' || e.key === '_') {
+        setZoomLevel(prev => Math.max(prev - 0.2, 0.5)); // Min zoom 0.5x
+        e.preventDefault();
+      }
+    };
+    
+    // Lock body scroll when in fullscreen
+    if (isFullscreen) {
+      document.body.style.overflow = 'hidden';
+      window.addEventListener('keydown', handleKeyPress);
+    } else {
+      document.body.style.overflow = '';
+      // Reset zoom level when exiting fullscreen
+      setZoomLevel(1.2);
+    }
+    
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', handleKeyPress);
+    };
+  }, [isFullscreen, isClient]);
+  
+  // Render the diagram
   useEffect(() => {
     if (!isClient || !chart) return;
     
-    let isMounted = true;
-    setIsLoading(true);
-    
-    // Use dynamic import to load mermaid only on client-side
     const renderDiagram = async () => {
       try {
-        // Dynamic import
-        const mermaidModule = await import('mermaid');
-        const mermaid = mermaidModule.default;
+        setIsLoading(true);
+        setError(null);
         
-        // Initialize mermaid with configuration
-        mermaid.initialize({
-          startOnLoad: false,
-          theme: 'dark',
-          securityLevel: 'loose', // Required for rendering
-          fontFamily: 'Inter, sans-serif',
-          flowchart: {
-            htmlLabels: true,
-            curve: 'basis',
-            useMaxWidth: false,
-            padding: 15
-          },
-          themeVariables: {
-            primaryColor: '#3b82f6',
-            primaryTextColor: '#ffffff',
-            primaryBorderColor: '#3b82f6',
-            lineColor: '#aaaaaa',
-            secondaryColor: '#006100',
-            tertiaryColor: '#202020'
-          },
-          logLevel: 5 // Silence non-critical errors
-        });
+        // Dynamically import mermaid
+        const mermaid = (await import('mermaid')).default;
         
-        // Remove title comment if present
-        const cleanChart = chart.startsWith('%%') ? 
-          chart.split('\n').slice(1).join('\n') : chart;
+        // Clean the chart by removing title comments
+        const cleanChart = chart.replace(/%%\s*Title:.*?%%/g, '').trim();
         
-        // Create a temporary container for rendering
-        const tempContainer = document.createElement('div');
-        tempContainer.style.display = 'none';
-        document.body.appendChild(tempContainer);
-        
-        // Use mermaid.render instead of relying on contentLoaded
-        const { svg } = await mermaid.render(uniqueId, cleanChart);
-        
-        // Clean up the temporary container
-        document.body.removeChild(tempContainer);
-        
-        // Enhance SVG for better visuals
-        const enhancedSvg = svg
-          .replace(/stroke-width="1"/g, 'stroke-width="2"')
-          .replace(/font-size="14px"/g, 'font-size="16px"')
-          .replace(/font-family="sans-serif"/g, 'font-family="Inter, sans-serif"');
-        
-        if (isMounted) {
-          setSvg(enhancedSvg);
-          setError(null);
-          setIsLoading(false);
+        // Initialize mermaid if not already initialized
+        if (!mermaid.initialized) {
+          mermaid.initialize({
+            startOnLoad: false,
+            theme: 'dark',
+            securityLevel: 'loose',
+            flowchart: {
+              htmlLabels: true,
+              curve: 'basis',
+              padding: 20
+            },
+            logLevel: 5 // Silence non-critical errors
+          });
         }
-      } catch (err) {
-        console.error("Mermaid error:", err);
-        if (isMounted) {
-          setError(err.message || "Failed to process diagram");
-          setSvg(''); // Clear any previous SVG
-          setIsLoading(false);
+        
+        // First validate the syntax
+        try {
+          await mermaid.parse(cleanChart);
+        } catch (parseError) {
+          throw new Error(`Invalid diagram syntax: ${parseError.message}`);
         }
+        
+        // Then render after a small delay to ensure DOM is ready
+        setTimeout(async () => {
+          try {
+            const { svg } = await mermaid.render(diagramId.current, cleanChart);
+            setSvgContent(svg);
+            setIsLoading(false);
+          } catch (renderError) {
+            setError(`Error rendering diagram: ${renderError.message}`);
+            setIsLoading(false);
+          }
+        }, 100);
+      } catch (error) {
+        setError(`Error preparing diagram: ${error.message}`);
+        setIsLoading(false);
       }
     };
-
-    // Add a small delay to ensure DOM is ready
-    const timer = setTimeout(() => {
-      renderDiagram();
-    }, 100);
-
+    
+    renderDiagram();
+    
     return () => {
-      isMounted = false;
-      clearTimeout(timer);
-      // Clean up any elements that might have been created
-      if (typeof document !== 'undefined') {
-        const tempElement = document.getElementById(uniqueId);
-        if (tempElement) {
-          tempElement.remove();
-        }
-      }
+      // Cleanup
     };
-  }, [chart, uniqueId, isClient]);
-
+  }, [chart, isClient]);
+  
   const toggleFullscreen = () => {
     setIsFullscreen(!isFullscreen);
   };
-
-  // Show loading state when on server or still rendering
-  if (!isClient || isLoading) {
-    return (
-      <div className="mermaid-wrapper">
-        <div className="mermaid-title">{diagramTitle}</div>
-        <div className="mermaid-container mermaid-loading">
-          <div className="mermaid-loading-indicator">
-            <div className="spinner"></div>
-            <p>Preparing diagram...</p>
+  
+  // Render fullscreen diagram using portal
+  const renderFullscreenDiagram = () => {
+    if (!isFullscreen || !isClient) return null;
+    
+    // Handle mouse wheel zoom
+    const handleWheel = (e) => {
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        const delta = e.deltaY < 0 ? 0.1 : -0.1;
+        setZoomLevel(prev => {
+          const newZoom = prev + delta;
+          return Math.min(Math.max(newZoom, 0.5), 3); // Clamp between 0.5 and 3
+        });
+      }
+    };
+    
+    // Create portal to render at document body level
+    return ReactDOM.createPortal(
+      <div className="global-fullscreen-overlay">
+        <div className="global-fullscreen-container" ref={fullscreenContainerRef}>
+          <div className="global-fullscreen-header">
+            <h3 className="global-fullscreen-title">{title}</h3>
+            <div className="global-fullscreen-controls">
+              <div className="keyboard-shortcuts">
+                <span className="shortcut-hint">Use <kbd>+</kbd>/<kbd>-</kbd> or <kbd>Ctrl</kbd>+wheel to zoom, <kbd>Esc</kbd> to exit</span>
+              </div>
+              <button 
+                className="zoom-control" 
+                onClick={() => setZoomLevel(prev => Math.max(prev - 0.2, 0.5))}
+                aria-label="Zoom out"
+              >
+                −
+              </button>
+              <span className="zoom-level">{Math.round(zoomLevel * 100)}%</span>
+              <button 
+                className="zoom-control" 
+                onClick={() => setZoomLevel(prev => Math.min(prev + 0.2, 3))}
+                aria-label="Zoom in"
+              >
+                +
+              </button>
+              <button 
+                className="global-fullscreen-close" 
+                onClick={toggleFullscreen}
+                aria-label="Close fullscreen"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+          <div 
+            className="global-fullscreen-content"
+            onWheel={handleWheel}
+          >
+            {svgContent && (
+              <div 
+                dangerouslySetInnerHTML={{ __html: svgContent }} 
+                style={{ transform: `scale(${zoomLevel})`, transformOrigin: 'center center' }}
+              />
+            )}
           </div>
         </div>
-      </div>
+      </div>,
+      document.body
     );
+  };
+  
+  if (!isClient) {
+    return <div className="mermaid-loading">Loading diagram...</div>;
   }
-
+  
   if (error) {
     return (
       <div className="mermaid-error">
-        <p>Error rendering diagram: {error}</p>
+        <strong>Failed to render diagram</strong>
+        <pre>{error}</pre>
         <pre>{chart}</pre>
       </div>
     );
   }
-
+  
   return (
-    <div className={`mermaid-wrapper ${isFullscreen ? 'fullscreen' : ''}`}>
-      <div className="mermaid-title">{diagramTitle}</div>
-      <div className="mermaid-controls">
-        <button 
-          className="fullscreen-toggle" 
-          onClick={toggleFullscreen}
-          aria-label={isFullscreen ? "Exit fullscreen" : "View fullscreen"}
-        >
-          {isFullscreen ? (
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3" 
-                stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <>
+      <div className="mermaid-wrapper">
+        {title && <div className="mermaid-title">{title}</div>}
+        <div className="mermaid-controls">
+          <button 
+            className="fullscreen-toggle" 
+            onClick={toggleFullscreen}
+            aria-label="View fullscreen"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
             </svg>
-          ) : (
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" 
-                stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          )}
-        </button>
-      </div>
-      {svg ? (
-        <div 
-          className="mermaid-container" 
-          ref={containerRef}
-          dangerouslySetInnerHTML={{ __html: svg }}
-        />
-      ) : (
-        <div className="mermaid-container mermaid-loading">
-          <div className="mermaid-loading-indicator">
-            <div className="spinner"></div>
-            <p>Rendering diagram...</p>
-          </div>
+          </button>
         </div>
-      )}
-    </div>
+        <div className="mermaid-container">
+          {isLoading ? (
+            <div className="mermaid-loading">
+              <div className="mermaid-loading-indicator">
+                <div className="spinner"></div>
+                <p>Rendering diagram...</p>
+              </div>
+            </div>
+          ) : (
+            <div dangerouslySetInnerHTML={{ __html: svgContent }} />
+          )}
+        </div>
+      </div>
+      {renderFullscreenDiagram()}
+    </>
   );
 };
 
@@ -565,7 +626,7 @@ This structured approach ensures thorough investigation while maintaining proper
       <div className="markdown-content">
         {parts.map((part, index) => {
           if (part.type === 'mermaid') {
-            return <MermaidDiagram key={index} chart={part.content} title={part.title} />;
+            return <MermaidDiagram key={index} chart={`%% Title: ${part.title} %%\n${part.content}`} />;
           } else {
             // Replace any remaining mermaid code blocks with empty strings
             // to avoid rendering them as code blocks

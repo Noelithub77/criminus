@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Magnifying glass -->
+  <circle cx="10" cy="10" r="7" stroke="#6366f1" fill="none" />
+  <line x1="15" y1="15" x2="20" y2="20" stroke="#6366f1" stroke-width="2" />
+  
+  <!-- Flowchart nodes and connections -->
+  <rect x="3" y="7" width="3" height="2" rx="1" fill="#f43f5e" stroke="none" />
+  <rect x="9" y="5" width="3" height="2" rx="1" fill="#8b5cf6" stroke="none" />
+  <rect x="9" y="13" width="3" height="2" rx="1" fill="#22c55e" stroke="none" />
+  
+  <!-- Connection lines -->
+  <path d="M6 8L9 6" stroke="#6366f1" stroke-width="0.75" />
+  <path d="M6 8L9 14" stroke="#6366f1" stroke-width="0.75" />
+</svg> 
