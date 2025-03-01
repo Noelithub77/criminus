@@ -36,6 +36,38 @@ export default function RootLayout({ children }) {
         <meta name="apple-mobile-web-app-title" content="Criminus" />
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
         <link rel="manifest" href="/manifest.json" />
+        <style>{`
+          html, body {
+            touch-action: pan-x pan-y;
+            -ms-touch-action: pan-x pan-y;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            overscroll-behavior: none;
+          }
+        `}</style>
+        <script dangerouslySetInnerHTML={{
+          __html: `
+            document.addEventListener('gesturestart', function(e) {
+              e.preventDefault();
+              return false;
+            });
+            document.addEventListener('gesturechange', function(e) {
+              e.preventDefault();
+              return false;
+            });
+            document.addEventListener('gestureend', function(e) {
+              e.preventDefault();
+              return false;
+            });
+            document.addEventListener('touchmove', function(e) {
+              if (e.scale !== 1) { e.preventDefault(); }
+            }, { passive: false });
+          `
+        }} />
       </head>
       <body
         className={`${geistSans.variable} ${dmSans.variable} antialiased min-h-screen flex flex-col`}
