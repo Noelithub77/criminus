@@ -1,17 +1,17 @@
-'use client';
+"use client";
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from "react";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
-import { analyzeLinkContent, extractUrls } from '../../utils/linkScraper';
-import Link from 'next/link';
-import styles from './page.module.css';
+import { analyzeLinkContent, extractUrls } from "../../utils/linkScraper";
+import Link from "next/link";
+import styles from "./page.module.css";
 
 export default function SpamDetection() {
-  const [message, setMessage] = useState('');
-  const [result, setResult] = useState('');
+  const [message, setMessage] = useState("");
+  const [result, setResult] = useState("");
   const [parsedResult, setParsedResult] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [linkAnalysis, setLinkAnalysis] = useState(null);
   const [isScrapingLinks, setIsScrapingLinks] = useState(false);
   const [expandedLinks, setExpandedLinks] = useState({});
@@ -20,16 +20,16 @@ export default function SpamDetection() {
 
   // Toggle expanded state for a link
   const toggleLinkExpand = (index) => {
-    setExpandedLinks(prev => ({
+    setExpandedLinks((prev) => ({
       ...prev,
-      [index]: !prev[index]
+      [index]: !prev[index],
     }));
   };
 
   const adjustTextareaHeight = () => {
     const textarea = textareaRef.current;
     if (textarea) {
-      textarea.style.height = 'auto';
+      textarea.style.height = "auto";
       textarea.style.height = `${textarea.scrollHeight}px`;
     }
   };
@@ -38,30 +38,24 @@ export default function SpamDetection() {
     adjustTextareaHeight();
   }, [message]);
 
-  // Replace your current useEffect for layout with this
   useEffect(() => {
-    // Mark component as mounted
     setIsMounted(true);
-    
-    // Apply critical styles directly to body and html
-    document.documentElement.style.height = '100%';
-    document.body.style.margin = '0';
-    document.body.style.padding = '0';
-    document.body.style.minHeight = '100vh';
-    document.body.style.width = '100%';
-    document.body.style.backgroundColor = 'black';
-    document.body.style.color = '#d1d5db';
-    document.body.style.boxSizing = 'border-box';
-    
-    // Force layout recalculation with a more reliable approach
+    document.documentElement.style.height = "100%";
+    document.body.style.margin = "0";
+    document.body.style.padding = "0";
+    document.body.style.minHeight = "100vh";
+    document.body.style.width = "100%";
+    document.body.style.backgroundColor = "black";
+    document.body.style.color = "#d1d5db";
+    document.body.style.boxSizing = "border-box";
+
     const timer = setTimeout(() => {
-      window.dispatchEvent(new Event('resize'));
+      window.dispatchEvent(new Event("resize"));
     }, 100);
-    
+
     return () => {
       clearTimeout(timer);
-      // Clean up styles when component unmounts
-      document.body.style.overflow = '';
+      document.body.style.overflow = "";
     };
   }, []);
 
@@ -71,118 +65,117 @@ export default function SpamDetection() {
 
   const analyzeMessage = async () => {
     if (!message.trim()) {
-      setError('Please enter a message to analyze');
+      setError("Please enter a message to analyze");
       return;
     }
 
     try {
       setLoading(true);
-      setError('');
+      setError("");
       setParsedResult(null);
       setLinkAnalysis(null);
-      
-      // Check if the message contains links
+
       const urls = extractUrls(message);
-      
-      // Start both operations in parallel
       const operations = [];
-      
-      // 1. Start the basic LLM analysis immediately
+
       const model = new ChatGoogleGenerativeAI({
         modelName: "gemini-2.0-flash-lite",
         maxOutputTokens: 2048,
         apiKey: process.env.NEXT_PUBLIC_GOOGLE_API_KEY,
       });
-      
+
       const basicPrompt = `You are a spam detection system. Analyze this SMS message and return a JSON object with spamScore (0-100), dangerScore (0-100), and warnings array: ${message}`;
       const basicAnalysisPromise = model.invoke(basicPrompt);
       operations.push(basicAnalysisPromise);
-      
-      // 2. Start link scraping in parallel (if links exist)
+
       let linkData = null;
       let enhancedAnalysisPromise = null;
-      
+
       if (urls.length > 0) {
         setIsScrapingLinks(true);
-        
-        // Create a promise for link scraping
+
         const linkScrapingPromise = analyzeLinkContent(message)
-          .then(data => {
+          .then((data) => {
             linkData = data;
             setLinkAnalysis(data);
-            
-            // If links were found and scraped successfully, do an enhanced analysis
+
             if (data && data.foundLinks && data.processedLinks.length > 0) {
-              // Prepare context with link data
-              const linkContext = data.processedLinks.map(link => {
-                return `
+              const linkContext = data.processedLinks
+                .map((link) => {
+                  return `
 Link: ${link.url}
-Title: ${link.title || 'N/A'}
-Description: ${link.metaDescription || 'N/A'}
-Has Login Form: ${link.hasLoginForm ? 'Yes (SUSPICIOUS)' : 'No'}
-Content: ${link.scrapedContent || 'N/A'}
+Title: ${link.title || "N/A"}
+Description: ${link.metaDescription || "N/A"}
+Has Login Form: ${link.hasLoginForm ? "Yes (SUSPICIOUS)" : "No"}
+Content: ${link.scrapedContent || "N/A"}
                 `.trim();
-              }).join('\n\n');
-              
+                })
+                .join("\n\n");
+
               const contextWithLinks = `${message}\n\nWEBSITE CONTENT FROM LINKS:\n${linkContext}`;
-              
-              // Create enhanced prompt with link data
+
               const enhancedPrompt = `You are a spam detection system. Analyze this SMS message and the content of links it contains. Return a JSON object with spamScore (0-100), dangerScore (0-100), and warnings array. Pay special attention to phishing attempts, suspicious links, and misleading content.\n\nMESSAGE AND LINK CONTENT:\n${contextWithLinks}`;
-              
-              // Start enhanced analysis
+
               return model.invoke(enhancedPrompt);
             }
-            
-            // If no links were found or scraping failed, return null
+
             return null;
           })
-          .catch(error => {
-            console.error('Error scraping links:', error);
+          .catch((error) => {
+            console.error("Error scraping links:", error);
             return null;
           })
           .finally(() => {
             setIsScrapingLinks(false);
           });
-        
+
         operations.push(linkScrapingPromise);
       }
-      
-      // Wait for all operations to complete
+
       const results = await Promise.all(operations);
-      
-      // Use enhanced analysis if available, otherwise use basic analysis
       const basicAnalysisResult = results[0];
       const enhancedAnalysisResult = urls.length > 0 ? results[1] : null;
-      
-      // Prefer enhanced analysis if available
       const finalResult = enhancedAnalysisResult || basicAnalysisResult;
       setResult(finalResult);
-      
+
       try {
-        // Try to parse the response content
         const content = finalResult.content || finalResult;
         const jsonMatch = content.match(/\{[\s\S]*\}/);
         const jsonStr = jsonMatch ? jsonMatch[0] : content;
         const parsed = JSON.parse(jsonStr);
         setParsedResult(parsed);
       } catch (parseError) {
-        console.error('Failed to parse response:', parseError);
+        console.error("Failed to parse response:", parseError);
       }
     } catch (err) {
-      setError('Error analyzing message. Please try again.');
-      console.error('Error:', err);
+      setError("Error analyzing message. Please try again.");
+      console.error("Error:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  // If not mounted yet, return a pre-styled div to prevent layout shift
   if (!isMounted) {
     return (
-      <div className="min-h-screen w-screen max-w-full m-0 p-6 bg-black text-gray-300 box-border">
-        {/* Optional loading indicator */}
-        <div className="flex items-center justify-center h-full">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-400"></div>
+      <div className={styles.spamContainer}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            height: "100%",
+          }}
+        >
+          <div
+            style={{
+              animation: "spin 1s linear infinite",
+              borderRadius: "9999px",
+              height: "3rem",
+              width: "3rem",
+              borderTop: "2px solid #60a5fa",
+              borderBottom: "2px solid #60a5fa",
+            }}
+          ></div>
         </div>
       </div>
     );
@@ -190,101 +183,127 @@ Content: ${link.scrapedContent || 'N/A'}
 
   return (
     <div className={styles.spamContainer}>
+      {/* Header */}
+      <div className={styles.header}>
+        <h1>Sathyameva Jayadhe</h1>
+        <div
+          style={{
+            width: "3rem",
+            height: "3rem",
+            backgroundColor: "#4b5563",
+            borderRadius: "9999px",
+          }}
+        ></div>
+      </div>
+
       {/* Back button */}
-      <div className="mb-6">
-        <Link href="/" className="flex items-center text-blue-400 hover:text-blue-300 transition-colors w-fit">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
+      <div>
+        <Link href="/" className={styles.backButton}>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            style={{
+              height: "1.25rem",
+              width: "1.25rem",
+              marginRight: "0.5rem",
+            }}
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fillRule="evenodd"
+              d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"
+              clipRule="evenodd"
+            />
           </svg>
         </Link>
       </div>
-      
-      {/* Header with name */}
-      <div className="flex justify-between items-center mb-12">
-        <h1 className="text-2xl font-medium text-gray-300">Sathyameva Jayadhe</h1>
-        <div className="w-12 h-12 bg-gray-700 rounded-full"></div>
+
+      {/* Title with Icon */}
+      <div className={styles.titleContainer}>
+        <h2 className={styles.appTitle}>Scam Detection</h2>
       </div>
-      
-      {/* Scam Detection Title with Icon */}
-      <div className="flex items-center gap-3 mb-10">
-        <div className="w-16 h-16 flex items-center justify-center">
-          <div className="w-14 h-14 bg-transparent rounded-full flex items-center justify-center border-2 border-blue-400 relative">
-            <span className="text-blue-400 text-2xl font-bold">S</span>
-            <div className="absolute -right-1 -bottom-1 w-8 h-8 bg-black flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
-              </svg>
-            </div>
-          </div>
-        </div>
-        <h2 className="text-4xl font-bold text-blue-400">Scam Detection</h2>
-      </div>
-      
+
       {/* Input Section */}
-      <div className="mt-12">
-        <h3 className="text-2xl mb-6 text-blue-400">Input</h3>
-        
-        <div className="bg-gray-500 bg-opacity-30 rounded-lg p-6 mb-6">
+      <div className={styles.inputSection}>
+        <h3 className={styles.sectionTitle}>Input</h3>
+
+        <div className={styles.inputContainer}>
           <textarea
             ref={textareaRef}
-            className="w-full p-3 border-0 rounded-lg min-h-[120px] text-gray-300 bg-transparent resize-none focus:outline-none"
+            className={styles.textarea}
             placeholder="Enter input..."
             value={message}
             onChange={handleMessageChange}
             rows={4}
           />
-          
-          {/* Link icon */}
-          {message.includes('http') && (
-            <div className="flex items-center mt-2 text-gray-500">
-              <span className="mr-2">🔗</span>
-              <span className="text-sm">Link detected</span>
+
+          {message.includes("http") && (
+            <div className={styles.linkIndicator}>
+              <span style={{ marginRight: "0.5rem" }}>🔗</span>
+              <span style={{ fontSize: "0.875rem" }}>Link detected</span>
             </div>
           )}
         </div>
-        
+
         <button
           onClick={analyzeMessage}
           disabled={loading || isScrapingLinks}
-          className="w-full bg-teal-700 text-white py-3 px-4 rounded-lg hover:bg-teal-600 disabled:opacity-50 text-lg font-medium"
+          className={styles.detectButton}
         >
-          {isScrapingLinks ? 'Analyzing...' : loading ? 'Analyzing...' : 'Detect'}
+          {isScrapingLinks
+            ? "Analyzing..."
+            : loading
+            ? "Analyzing..."
+            : "Detect"}
         </button>
-        
-        {error && (
-          <div className="text-red-400 p-3 rounded-lg bg-red-900 bg-opacity-30 mt-4">
-            {error}
-          </div>
-        )}
+
+        {error && <div className={styles.errorMessage}>{error}</div>}
       </div>
-      
+
       {/* Results Section */}
       {parsedResult && (
-        <div className="mt-10 space-y-6">
-          <h3 className="text-2xl mb-6 text-gray-400">Analysis Results</h3>
-          
-          <div className="bg-gray-800 p-6 rounded-lg">
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div className="p-4 bg-gray-700 rounded-lg">
-                <h3 className="font-semibold text-orange-400">Spam Score</h3>
-                <div className="text-3xl font-bold text-orange-300">
+        <div className={styles.resultsSection}>
+          <h3 className={styles.sectionTitle} style={{ color: "#9ca3af" }}>
+            Analysis Results
+          </h3>
+
+          <div className={styles.resultContainer}>
+            <div className={styles.scoreGrid}>
+              <div className={styles.scoreCard}>
+                <h3 className={`${styles.scoreTitle} ${styles.spamScoreTitle}`}>
+                  Spam Score
+                </h3>
+                <div
+                  className={`${styles.scoreValue} ${styles.spamScoreValue}`}
+                >
                   {parsedResult.spamScore}%
                 </div>
               </div>
-              <div className="p-4 bg-gray-700 rounded-lg">
-                <h3 className="font-semibold text-red-400">Danger Score</h3>
-                <div className="text-3xl font-bold text-red-300">
+              <div className={styles.scoreCard}>
+                <h3
+                  className={`${styles.scoreTitle} ${styles.dangerScoreTitle}`}
+                >
+                  Danger Score
+                </h3>
+                <div
+                  className={`${styles.scoreValue} ${styles.dangerScoreValue}`}
+                >
                   {parsedResult.dangerScore}%
                 </div>
               </div>
             </div>
-            
+
             <div>
-              <h3 className="font-semibold text-gray-300 mb-3">Warnings</h3>
-              <div className="bg-gray-700 p-4 rounded-lg">
-                <ul className="list-disc pl-5 space-y-2">
+              <h3
+                className={styles.scoreTitle}
+                style={{ color: "#d1d5db", marginBottom: "0.75rem" }}
+              >
+                Warnings
+              </h3>
+              <div className={styles.warningsContainer}>
+                <ul className={styles.warningsList}>
                   {parsedResult.warnings?.map((warning, index) => (
-                    <li key={index} className="text-gray-300">
+                    <li key={index} className={styles.warningItem}>
                       {warning}
                     </li>
                   ))}
@@ -294,130 +313,186 @@ Content: ${link.scrapedContent || 'N/A'}
           </div>
         </div>
       )}
-      
+
       {/* Link Analysis Section */}
       {linkAnalysis && linkAnalysis.foundLinks && (
-        <div className="mt-10 space-y-6">
-          <h3 className="text-2xl mb-6 text-gray-400">Link Analysis</h3>
-          
-          <div className="bg-gray-800 p-6 rounded-lg">
-            <p className="text-sm text-gray-400 mb-4">
-              Found {linkAnalysis.allLinks.length} link(s) in the message. 
+        <div className={styles.linkAnalysisSection}>
+          <h3 className={styles.sectionTitle} style={{ color: "#9ca3af" }}>
+            Link Analysis
+          </h3>
+
+          <div className={styles.resultContainer}>
+            <p
+              style={{
+                fontSize: "0.875rem",
+                color: "#9ca3af",
+                marginBottom: "1rem",
+              }}
+            >
+              Found {linkAnalysis.allLinks.length} link(s) in the message.
               {linkAnalysis.additionalInfo && ` ${linkAnalysis.additionalInfo}`}
             </p>
-            
+
             {/* Link Summary */}
-            {linkAnalysis.processedLinks.some(link => link.hasLoginForm || link.hasPasswordFields) && (
-              <div className="bg-red-900 bg-opacity-30 p-4 rounded-lg mb-6 border border-red-800">
-                <p className="text-sm font-medium text-red-400 mb-1">⚠️ Warning: Suspicious Links Detected</p>
-                <p className="text-xs text-red-300">
-                  One or more links contain login forms or password fields, which may indicate phishing attempts.
-                  Be extremely cautious with these links.
+            {linkAnalysis.processedLinks.some(
+              (link) => link.hasLoginForm || link.hasPasswordFields
+            ) && (
+              <div className={styles.linkWarning}>
+                <p className={styles.linkWarningTitle}>
+                  ⚠️ Warning: Suspicious Links Detected
+                </p>
+                <p className={styles.linkWarningText}>
+                  One or more links contain login forms or password fields,
+                  which may indicate phishing attempts. Be extremely cautious
+                  with these links.
                 </p>
               </div>
             )}
-            
-            <div className="space-y-4">
+
+            <div
+              style={{ display: "flex", flexDirection: "column", gap: "1rem" }}
+            >
               {linkAnalysis.processedLinks.map((link, index) => {
                 // Determine if this link has suspicious indicators
-                const isSuspicious = link.hasLoginForm || link.hasPasswordFields;
-                
+                const isSuspicious =
+                  link.hasLoginForm || link.hasPasswordFields;
+
                 return (
-                  <div key={index} className={`bg-gray-700 p-4 rounded-lg border ${isSuspicious ? 'border-red-800' : 'border-gray-600'}`}>
-                    <div className="flex justify-between items-start mb-2">
-                      <h4 className="font-medium text-blue-300 break-all">{link.url}</h4>
-                      <div className="flex items-center gap-2">
+                  <div
+                    key={index}
+                    className={`${styles.linkCard} ${
+                      isSuspicious ? styles.linkCardSuspicious : ""
+                    }`}
+                  >
+                    <div className={styles.linkHeader}>
+                      <h4 className={styles.linkUrl}>{link.url}</h4>
+                      <div className={styles.linkBadges}>
                         {isSuspicious && (
-                          <span className="text-xs px-2 py-1 rounded-full bg-red-900 text-red-300 flex items-center">
-                            <span className="mr-1">⚠️</span> Suspicious
+                          <span className={styles.suspiciousBadge}>
+                            <span style={{ marginRight: "0.25rem" }}>⚠️</span>{" "}
+                            Suspicious
                           </span>
                         )}
-                        <span className="text-xs px-2 py-1 rounded-full bg-gray-600 text-gray-300">Link {index + 1}</span>
+                        <span className={styles.linkNumberBadge}>
+                          Link {index + 1}
+                        </span>
                       </div>
                     </div>
-                    
+
                     {link.error ? (
-                      <div className="text-red-400 text-sm p-2 bg-red-900 bg-opacity-30 rounded">
-                        <p className="font-medium">Error analyzing link:</p>
+                      <div className={styles.linkError}>
+                        <p style={{ fontWeight: "500" }}>
+                          Error analyzing link:
+                        </p>
                         <p>{link.error}</p>
                       </div>
                     ) : (
-                      <div className="space-y-3">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          <div className="p-3 bg-gray-800 rounded">
-                            <p className="text-sm font-medium text-gray-400">Title</p>
-                            <p className="text-sm text-gray-300">{link.title || 'N/A'}</p>
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "0.75rem",
+                        }}
+                      >
+                        <div className={styles.linkInfoGrid}>
+                          <div className={styles.linkInfoCard}>
+                            <p className={styles.linkInfoLabel}>Title</p>
+                            <p className={styles.linkInfoValue}>
+                              {link.title || "N/A"}
+                            </p>
                           </div>
-                          <div className="p-3 bg-gray-800 rounded">
-                            <p className="text-sm font-medium text-gray-400">Description</p>
-                            <p className="text-sm text-gray-300">{link.metaDescription || 'N/A'}</p>
+                          <div className={styles.linkInfoCard}>
+                            <p className={styles.linkInfoLabel}>Description</p>
+                            <p className={styles.linkInfoValue}>
+                              {link.metaDescription || "N/A"}
+                            </p>
                           </div>
                         </div>
-                        
+
                         {/* Security indicators */}
-                        <div className="flex flex-wrap gap-2">
+                        <div className={styles.securityBadges}>
                           {link.hasForms && (
-                            <span className="text-xs px-2 py-1 rounded-full bg-yellow-900 bg-opacity-30 text-yellow-300">
+                            <span className={styles.formBadge}>
                               Contains Forms
                             </span>
                           )}
                           {link.hasPasswordFields && (
-                            <span className="text-xs px-2 py-1 rounded-full bg-orange-900 bg-opacity-30 text-orange-300">
+                            <span className={styles.passwordBadge}>
                               Password Fields
                             </span>
                           )}
                           {link.hasLoginForm && (
-                            <span className="text-xs px-2 py-1 rounded-full bg-red-900 bg-opacity-30 text-red-300">
+                            <span className={styles.loginFormBadge}>
                               ⚠️ Login Form (Potential Phishing)
                             </span>
                           )}
                         </div>
-                        
+
                         {/* Mobile: Only show detailed content when expanded */}
-                        <div className={`md:block ${expandedLinks[index] ? 'block' : 'hidden'}`}>
+                        <div
+                          className={
+                            expandedLinks[index]
+                              ? styles.block
+                              : styles.hidden + " " + styles.mdBlock
+                          }
+                        >
                           {/* Content preview */}
-                          <div className="mt-2">
-                            <p className="text-sm font-medium text-gray-400 mb-1">Content Preview</p>
-                            <div className="text-xs p-3 bg-gray-800 rounded max-h-32 overflow-y-auto">
+                          <div className={styles.contentPreview}>
+                            <p className={styles.contentPreviewLabel}>
+                              Content Preview
+                            </p>
+                            <div className={styles.contentPreviewBox}>
                               {link.scrapedContent ? (
-                                <p className="whitespace-pre-wrap text-gray-300">{link.scrapedContent}</p>
+                                <p className={styles.contentText}>
+                                  {link.scrapedContent}
+                                </p>
                               ) : (
-                                <p className="text-gray-500 italic">No content available</p>
+                                <p className={styles.noContentText}>
+                                  No content available
+                                </p>
                               )}
                             </div>
                           </div>
-                          
+
                           {/* Headers if available */}
                           {link.h1s && link.h1s.length > 0 && (
-                            <div className="mt-2">
-                              <p className="text-sm font-medium text-gray-400 mb-1">Main Headers</p>
-                              <ul className="text-xs list-disc list-inside pl-2">
+                            <div className={styles.headersSection}>
+                              <p className={styles.headersLabel}>
+                                Main Headers
+                              </p>
+                              <ul className={styles.headersList}>
                                 {link.h1s.slice(0, 3).map((header, i) => (
-                                  <li key={i} className="text-gray-300">{header}</li>
+                                  <li key={i} className={styles.headerItem}>
+                                    {header}
+                                  </li>
                                 ))}
                                 {link.h1s.length > 3 && (
-                                  <li className="text-gray-500 italic">...and {link.h1s.length - 3} more</li>
+                                  <li className={styles.moreHeadersItem}>
+                                    ...and {link.h1s.length - 3} more
+                                  </li>
                                 )}
                               </ul>
                             </div>
                           )}
-                          
+
                           {/* Link stats */}
                           {link.linkCount !== undefined && (
-                            <div className="text-xs text-gray-500">
+                            <div className={styles.linkStats}>
                               Contains {link.linkCount} links
                             </div>
                           )}
                         </div>
                       </div>
                     )}
-                    
+
                     {/* Expand/collapse button for mobile */}
-                    <button 
+                    <button
                       onClick={() => toggleLinkExpand(index)}
-                      className="mt-3 text-xs text-blue-400 hover:text-blue-300 md:hidden block w-full text-center py-1 border border-gray-600 rounded"
+                      className={styles.expandButton}
                     >
-                      {expandedLinks[index] ? 'Show less details' : 'Show more details'}
+                      {expandedLinks[index]
+                        ? "Show less details"
+                        : "Show more details"}
                     </button>
                   </div>
                 );
@@ -428,4 +503,4 @@ Content: ${link.scrapedContent || 'N/A'}
       )}
     </div>
   );
-} 
+}
