@@ -36,7 +36,7 @@ export default function RootLayout({ children }) {
         <meta name="apple-mobile-web-app-title" content="Criminus" />
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
         <link rel="manifest" href="/manifest.json" />
-        <style>{`
+        {/* <style>{`
           html, body {
             touch-action: pan-x pan-y;
             -ms-touch-action: pan-x pan-y;
@@ -67,7 +67,7 @@ export default function RootLayout({ children }) {
               if (e.scale !== 1) { e.preventDefault(); }
             }, { passive: false });
           `
-        }} />
+        }} /> */}
       </head>
       <body
         className={`${geistSans.variable} ${dmSans.variable} antialiased min-h-screen flex flex-col`}
