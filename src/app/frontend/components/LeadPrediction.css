@@ -1,6 +1,6 @@
 .lead-prediction-page {
   width: 100%;
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 16px;
   height: 100vh;
@@ -57,7 +57,7 @@
 .content-container {
   display: flex;
   flex: 1;
-  gap: 16px;
+  gap: 24px;
   overflow: hidden;
   position: relative;
 }
@@ -79,6 +79,22 @@
   flex: 1;
 }
 
+@media (min-width: 1024px) {
+  .welcome-container {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+  
+  .user-manual {
+    flex: 1;
+    max-width: 400px;
+  }
+  
+  .quick-prompts {
+    flex: 2;
+  }
+}
+
 .user-manual {
   background: rgba(255, 255, 255, 0.05);
   border-radius: 12px;
@@ -96,6 +112,8 @@
 .user-manual p {
   color: #b0b0b0;
   margin-bottom: 12px;
+  font-size: 0.95rem;
+  line-height: 1.5;
 }
 
 .user-manual ol {
@@ -106,6 +124,7 @@
 .user-manual li {
   margin-bottom: 8px;
   color: #b0b0b0;
+  font-size: 0.95rem;
 }
 
 /* Quick prompts */
@@ -172,10 +191,13 @@
 
 /* Side panel */
 .side-panel {
-  width: 280px;
+  width: 300px;
   overflow-y: auto;
   flex-shrink: 0;
   padding-right: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .suggested-inputs {
@@ -224,6 +246,52 @@
   line-height: 1.4;
 }
 
+/* Quick tips */
+.quick-tips {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 16px;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+.quick-tips h3 {
+  font-size: 1.2rem;
+  margin-bottom: 16px;
+  color: #e0e0e0;
+}
+
+.tips-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tip-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 8px;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
+}
+
+.tip-item:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.tip-icon {
+  font-size: 18px;
+  margin-top: 2px;
+}
+
+.tip-item p {
+  color: #b0b0b0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
 /* Messages */
 .lead-prediction-messages {
   display: flex;
@@ -238,7 +306,7 @@
 .message {
   display: flex;
   gap: 12px;
-  max-width: 85%;
+  max-width: 90%;
   animation: fadeIn 0.3s ease-out;
 }
 
@@ -249,6 +317,7 @@
 
 .ai-message {
   align-self: flex-start;
+  width: 100%;
 }
 
 .message-avatar {
@@ -272,6 +341,7 @@
   line-height: 1.5;
   overflow-wrap: break-word;
   word-break: break-word;
+  width: 100%;
 }
 
 .user-message .message-content {
@@ -288,6 +358,7 @@
 .markdown-content {
   color: #e0e0e0;
   font-size: 0.95rem;
+  width: 100%;
 }
 
 .markdown-content p {
@@ -335,18 +406,138 @@
 }
 
 /* Mermaid diagrams */
-.mermaid-container {
-  background: rgba(0, 0, 0, 0.2);
+.mermaid-wrapper {
+  position: relative;
+  margin: 1.5rem 0;
   border-radius: 8px;
-  padding: 16px;
-  margin: 16px 0;
+  overflow: hidden;
+  background-color: #1e1e2e;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+}
+
+.mermaid-wrapper.fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
+  margin: 0;
+  padding: 20px;
+  border-radius: 0;
+  background-color: rgba(0, 0, 0, 0.9);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.mermaid-title {
+  padding: 10px 15px;
+  font-weight: 600;
+  color: #fff;
+  background-color: #2d2d3f;
+  border-bottom: 1px solid #3d3d5c;
+}
+
+.mermaid-controls {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+}
+
+.fullscreen-toggle {
+  background: rgba(0, 0, 0, 0.4);
+  border: none;
+  border-radius: 4px;
+  color: white;
+  padding: 4px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.fullscreen-toggle:hover {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.mermaid-container {
+  padding: 15px;
+  overflow: auto;
+  max-height: 500px;
+}
+
+.fullscreen .mermaid-container {
+  max-height: calc(100vh - 100px);
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.mermaid-container svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.fullscreen .mermaid-container svg {
+  max-width: 90%;
+  max-height: 90vh;
+}
+
+.mermaid-error {
+  padding: 15px;
+  background-color: #fee2e2;
+  border: 1px solid #ef4444;
+  border-radius: 8px;
+  color: #b91c1c;
+  margin: 1rem 0;
+}
+
+.mermaid-error pre {
+  margin-top: 10px;
+  padding: 10px;
+  background-color: #f9fafb;
+  border-radius: 4px;
   overflow-x: auto;
+  font-size: 0.85rem;
+  color: #1f2937;
+}
+
+/* Ensure SVG elements in Mermaid diagrams are visible */
+.mermaid-container svg * {
+  transition: all 0.3s ease;
+}
+
+.mermaid-container .node rect,
+.mermaid-container .node circle,
+.mermaid-container .node ellipse,
+.mermaid-container .node polygon,
+.mermaid-container .node path {
+  stroke-width: 2px !important;
+}
+
+.mermaid-container .edgePath .path {
+  stroke-width: 2px !important;
+}
+
+.mermaid-container .label {
+  font-family: 'Inter', sans-serif !important;
+  font-size: 14px !important;
+}
+
+/* Ensure the diagram is centered in the container */
+.mermaid-container {
+  display: flex;
+  justify-content: center;
 }
 
 /* Tables */
 .table-container {
   overflow-x: auto;
   margin: 16px 0;
+  width: 100%;
 }
 
 .structured-table {
@@ -586,11 +777,56 @@
   .quick-prompts-grid {
     grid-template-columns: 1fr;
   }
+  
+  .mermaid svg {
+    min-width: 300px;
+  }
 }
 
 @media (min-width: 769px) {
   .desktop-layout {
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 0 auto;
+  }
+  
+  .ai-message .message-content {
+    max-width: 100%;
+  }
+}
+
+/* Mermaid loading state */
+.mermaid-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.mermaid-loading-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.mermaid-loading-indicator p {
+  color: #a0a0a0;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.spinner {
+  width: 30px;
+  height: 30px;
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  border-top-color: #3b82f6;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
   }
 } 
