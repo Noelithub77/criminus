@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { createBrowserClient } from "@supabase/ssr";
 import "./ChildSafety.css";
 import { GoogleMap, useJsApiLoader, Marker } from "@react-google-maps/api";
-export const createClient = () => {
+
+const createClient = () => {
   return createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -148,9 +149,10 @@ const ChildSafety = () => {
             style={{ width: "100%", marginTop: "10px" }}
             onError={(e) => {
               console.error("Audio error:", e);
+              const audioElement = e.target as HTMLAudioElement;
               setLoadingState(
                 "audio error: " +
-                  (e.target.error ? e.target.error.message : "unknown error")
+                  (audioElement.error ? audioElement.error.message : "unknown error")
               );
             }}
             onLoadedData={() => setLoadingState("audio loaded")}

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { createBrowserClient } from '@supabase/ssr'
 import { Send, Camera } from "react-feather";
 
-export const createClient = () => {
+const createClient = () => {
   return createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -11,16 +11,18 @@ export const createClient = () => {
 const supabase = createClient()
 function SendMessage() {
   const [message, setMessage] = useState("");
-  const [image, setImage] = useState(null);
-  const [imageUrl, setImageUrl] = useState(null);
+  const [image, setImage] = useState<Blob | null>(null);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
     useEffect(() => {
       navigator.mediaDevices
         .getUserMedia({ video: true })
         .then((stream) => {
-          const video = document.getElementById("video");
-          video.srcObject = stream;
+          const video = document.getElementById("video") as HTMLVideoElement;
+          if (video) {
+            video.srcObject = stream;
+          }
         })
         .catch((err) => {
           console.error("Error accessing camera:", err);
@@ -39,18 +41,24 @@ function SendMessage() {
   // }, []);
 
   const handleCapture = () => {
-    const video = document.getElementById("video");
+    const video = document.getElementById("video") as HTMLVideoElement;
+    if (!video) return;
+    
     const canvas = document.createElement("canvas");
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     const context = canvas.getContext("2d");
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
-    canvas.toBlob((blob) => {
-      setImage(blob);
-    }, "image/jpeg");
+    if (context) {
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob((blob) => {
+        if (blob) {
+          setImage(blob);
+        }
+      }, "image/jpeg");
+    }
   };
 
-  const uploadImageToSupabase = async (imageBlob) => {
+  const uploadImageToSupabase = async (imageBlob: Blob) => {
     if (!imageBlob) {
       console.error("Error: No image data to upload!");
       return;
@@ -86,7 +94,7 @@ function SendMessage() {
     console.log("Uploaded file URL:", urlData.publicUrl);
     return urlData.publicUrl;
   };
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.MouseEvent) => {
     e.preventDefault();
     let uploadedImageUrl = imageUrl;
 
@@ -118,8 +126,8 @@ function SendMessage() {
     <div className="anonymousReportingContainer">
       {success && (
         <div className="anonymousReportingSuccess">
-          Your report has been sent safely! Rest easy—it’s securely and
-          anonymously in the right hands. We've got you!
+          Your report has been sent safely! Rest easy—it&apos;s securely and
+          anonymously in the right hands. We&apos;ve got you!
         </div>
       )}
       <div className="cameraFeed">
@@ -128,6 +136,7 @@ function SendMessage() {
           className="anonymousReportingCameraButton"
           type="button"
           onClick={handleCapture}
+          title="Capture photo"
         >
           <Camera />
         </button>
@@ -140,7 +149,11 @@ function SendMessage() {
           onChange={(e) => setMessage(e.target.value)}
           placeholder="Enter a description"
         />
-        <button className="anonymousReportingButton" onClick={handleSubmit}>
+        <button 
+          className="anonymousReportingButton" 
+          onClick={handleSubmit}
+          title="Send report"
+        >
           <Send />
         </button>
       </div>
