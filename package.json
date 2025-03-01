@@ -20,6 +20,7 @@
     "chromedriver": "^133.0.3",
     "langchain": "^0.3.19",
     "next": "15.2.0",
+    "next-pwa": "^5.6.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-feather": "^2.0.10",
