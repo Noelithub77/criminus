@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { initSpeechRecognition, speakText, stopSpeaking } from '../../utils/speechUtils';
+import { initSpeechRecognition, speakText, stopSpeaking, getAvailableVoices } from '../../utils/speechUtils';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export default function DispatchCall() {
@@ -26,6 +26,14 @@ export default function DispatchCall() {
   const [isProcessingText, setIsProcessingText] = useState(false);
   const [showWaveform, setShowWaveform] = useState(false);
   const [audioVisualization, setAudioVisualization] = useState([]);
+  const [showVoiceSettings, setShowVoiceSettings] = useState(false);
+  const [voiceParams, setVoiceParams] = useState({
+    rate: 1.0,
+    pitch: 1.0,
+    volume: 1.0,
+    voiceURI: ''
+  });
+  const [availableVoices, setAvailableVoices] = useState([]);
   
   const recognitionRef = useRef(null);
   const conversationContainerRef = useRef(null);
@@ -225,6 +233,49 @@ export default function DispatchCall() {
     }
   };
   
+  // Load available voices
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      // Get initial voices
+      const voices = getAvailableVoices();
+      if (voices.length > 0) {
+        setAvailableVoices(voices);
+        // Set default voice if available
+        const defaultVoice = voices.find(voice => 
+          voice.name.includes('Google US English Female') ||
+          voice.name.includes('Microsoft Zira') ||
+          voice.name.includes('Natural') ||
+          voice.name.includes('Female') ||
+          voice.name.includes('Google')
+        );
+        if (defaultVoice) {
+          setVoiceParams(prev => ({ ...prev, voiceURI: defaultVoice.voiceURI }));
+        }
+      }
+      
+      // Listen for voices changed event
+      window.speechSynthesis.onvoiceschanged = () => {
+        const updatedVoices = getAvailableVoices();
+        setAvailableVoices(updatedVoices);
+        
+        // Set default voice if not already set
+        if (!voiceParams.voiceURI && updatedVoices.length > 0) {
+          const defaultVoice = updatedVoices.find(voice => 
+            voice.name.includes('Google US English Female') ||
+            voice.name.includes('Microsoft Zira') ||
+            voice.name.includes('Natural') ||
+            voice.name.includes('Female') ||
+            voice.name.includes('Google')
+          );
+          if (defaultVoice) {
+            setVoiceParams(prev => ({ ...prev, voiceURI: defaultVoice.voiceURI }));
+          }
+        }
+      };
+    }
+  }, []);
+  
+  // Update the uploadAudio function to use voice parameters
   const uploadAudio = async (fileToUpload = null, transcriptText = '') => {
     const fileToProcess = fileToUpload || audioFile;
     
@@ -343,7 +394,7 @@ Please respond as if you are speaking to the caller directly. Keep your response
       
       setAiResponse(responseText);
       
-      // Speak the response
+      // Speak the response with voice parameters
       setIsSpeaking(true);
       speakText(responseText, 
         () => {
@@ -358,7 +409,8 @@ Please respond as if you are speaking to the caller directly. Keep your response
         },
         () => {
           setIsSpeaking(true);
-        }
+        },
+        voiceParams
       );
     } catch (err) {
       setError('Error processing your audio: ' + err.message);
@@ -418,6 +470,7 @@ Please respond as if you are speaking to the caller directly. Keep your response
     // We don't need to process transcript here as it will be handled by the audio recording stop event
   };
   
+  // Update the processTranscript function to use voice parameters
   const processTranscript = async () => {
     try {
       setIsProcessing(true);
@@ -474,7 +527,7 @@ Respond as if you are speaking to the caller directly. Keep your response brief,
       
       setAiResponse(responseText);
       
-      // Speak the response
+      // Speak the response with voice parameters
       setIsSpeaking(true);
       speakText(responseText, 
         () => {
@@ -483,7 +536,8 @@ Respond as if you are speaking to the caller directly. Keep your response brief,
         },
         () => {
           setIsSpeaking(true);
-        }
+        },
+        voiceParams
       );
     } catch (err) {
       setError('Error getting response from Gemini: ' + err.message);
@@ -493,6 +547,7 @@ Respond as if you are speaking to the caller directly. Keep your response brief,
     }
   };
   
+  // Update the initiateCall function to use voice parameters
   const initiateCall = () => {
     setCallStatus('calling');
     setConversationHistory([]);
@@ -506,14 +561,14 @@ Respond as if you are speaking to the caller directly. Keep your response brief,
       const initialGreeting = "911 Emergency Dispatch. What's your emergency?";
       setConversationHistory([{ role: 'assistant', content: initialGreeting }]);
       
-      // Speak the greeting and start recording when done
+      // Speak the greeting with voice parameters
       speakText(initialGreeting, () => {
         if (inputMode === 'unified') {
           startRecording();
         }
       }, () => {
         setIsSpeaking(true);
-      });
+      }, voiceParams);
     }, 2000);
   };
   
@@ -527,6 +582,7 @@ Respond as if you are speaking to the caller directly. Keep your response brief,
     stopSpeaking();
   };
   
+  // Update the handleTextSubmit function to use voice parameters
   const handleTextSubmit = async (e) => {
     e.preventDefault();
     
@@ -592,7 +648,7 @@ Respond as if you are speaking to the caller directly. Keep your response brief,
       
       setAiResponse(responseText);
       
-      // Speak the response
+      // Speak the response with voice parameters
       setIsSpeaking(true);
       speakText(responseText, 
         () => {
@@ -600,7 +656,8 @@ Respond as if you are speaking to the caller directly. Keep your response brief,
         },
         () => {
           setIsSpeaking(true);
-        }
+        },
+        voiceParams
       );
       
       // Clear text input
@@ -614,6 +671,16 @@ Respond as if you are speaking to the caller directly. Keep your response brief,
     }
   };
   
+  // Add a function to handle voice parameter changes
+  const handleVoiceParamChange = (param, value) => {
+    setVoiceParams(prev => ({ ...prev, [param]: value }));
+  };
+
+  // Add a function to toggle voice settings panel
+  const toggleVoiceSettings = () => {
+    setShowVoiceSettings(!showVoiceSettings);
+  };
+
   return (
     <div className="max-w-md mx-auto p-4 min-h-screen flex flex-col bg-gray-100">
       <h1 className="text-2xl font-bold mb-4 text-center text-gray-800">Emergency Dispatch AI</h1>
@@ -631,12 +698,23 @@ Respond as if you are speaking to the caller directly. Keep your response brief,
             </div>
             <div className="flex items-center gap-2">
               {callStatus === 'connected' && (
-                <button 
-                  onClick={() => setInputMode(inputMode === 'unified' ? 'text' : 'unified')}
-                  className="text-xs px-2 py-1 bg-blue-700 rounded-full hover:bg-blue-800"
-                >
-                  {inputMode === 'unified' ? 'Switch to Text' : 'Switch to Voice'}
-                </button>
+                <>
+                  <button 
+                    onClick={toggleVoiceSettings}
+                    className="text-xs px-2 py-1 bg-blue-700 rounded-full hover:bg-blue-800 flex items-center gap-1"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-3 h-3">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z" />
+                    </svg>
+                    Voice
+                  </button>
+                  <button 
+                    onClick={() => setInputMode(inputMode === 'unified' ? 'text' : 'unified')}
+                    className="text-xs px-2 py-1 bg-blue-700 rounded-full hover:bg-blue-800"
+                  >
+                    {inputMode === 'unified' ? 'Switch to Text' : 'Switch to Voice'}
+                  </button>
+                </>
               )}
               <div className="text-sm font-medium">
                 {isRecording && 'Recording...'}
@@ -646,6 +724,131 @@ Respond as if you are speaking to the caller directly. Keep your response brief,
               </div>
             </div>
           </div>
+          
+          {/* Voice Settings Panel */}
+          {showVoiceSettings && (
+            <div className="bg-gray-50 p-3 border-b border-gray-200">
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="text-sm font-medium text-gray-700">Voice Settings</h3>
+                <button 
+                  onClick={toggleVoiceSettings}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              <div className="space-y-3">
+                {/* Voice Selection */}
+                <div>
+                  <label htmlFor="voice-select" className="block text-xs font-medium text-gray-700 mb-1">Voice</label>
+                  <select
+                    id="voice-select"
+                    value={voiceParams.voiceURI}
+                    onChange={(e) => handleVoiceParamChange('voiceURI', e.target.value)}
+                    className="w-full text-sm rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  >
+                    {availableVoices.map((voice) => (
+                      <option key={voice.voiceURI} value={voice.voiceURI}>
+                        {voice.name} ({voice.lang})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                
+                {/* Rate Slider */}
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <label htmlFor="rate-slider" className="block text-xs font-medium text-gray-700">Speed: {voiceParams.rate.toFixed(1)}x</label>
+                    <button 
+                      onClick={() => handleVoiceParamChange('rate', 1.0)}
+                      className="text-xs text-blue-600 hover:text-blue-800"
+                    >
+                      Reset
+                    </button>
+                  </div>
+                  <input
+                    id="rate-slider"
+                    type="range"
+                    min="0.5"
+                    max="2"
+                    step="0.1"
+                    value={voiceParams.rate}
+                    onChange={(e) => handleVoiceParamChange('rate', parseFloat(e.target.value))}
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                  />
+                  <div className="flex justify-between text-xs text-gray-500">
+                    <span>Slow</span>
+                    <span>Fast</span>
+                  </div>
+                </div>
+                
+                {/* Pitch Slider */}
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <label htmlFor="pitch-slider" className="block text-xs font-medium text-gray-700">Pitch: {voiceParams.pitch.toFixed(1)}</label>
+                    <button 
+                      onClick={() => handleVoiceParamChange('pitch', 1.0)}
+                      className="text-xs text-blue-600 hover:text-blue-800"
+                    >
+                      Reset
+                    </button>
+                  </div>
+                  <input
+                    id="pitch-slider"
+                    type="range"
+                    min="0.5"
+                    max="1.5"
+                    step="0.1"
+                    value={voiceParams.pitch}
+                    onChange={(e) => handleVoiceParamChange('pitch', parseFloat(e.target.value))}
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                  />
+                  <div className="flex justify-between text-xs text-gray-500">
+                    <span>Low</span>
+                    <span>High</span>
+                  </div>
+                </div>
+                
+                {/* Volume Slider */}
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <label htmlFor="volume-slider" className="block text-xs font-medium text-gray-700">Volume: {Math.round(voiceParams.volume * 100)}%</label>
+                    <button 
+                      onClick={() => handleVoiceParamChange('volume', 1.0)}
+                      className="text-xs text-blue-600 hover:text-blue-800"
+                    >
+                      Reset
+                    </button>
+                  </div>
+                  <input
+                    id="volume-slider"
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.1"
+                    value={voiceParams.volume}
+                    onChange={(e) => handleVoiceParamChange('volume', parseFloat(e.target.value))}
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                  />
+                  <div className="flex justify-between text-xs text-gray-500">
+                    <span>Quiet</span>
+                    <span>Loud</span>
+                  </div>
+                </div>
+                
+                {/* Test Voice Button */}
+                <button
+                  onClick={() => speakText("This is a test of the emergency dispatch voice.", () => {}, () => {}, voiceParams)}
+                  className="w-full py-1.5 bg-blue-500 text-white text-sm rounded-md hover:bg-blue-600 transition-colors"
+                >
+                  Test Voice
+                </button>
+              </div>
+            </div>
+          )}
           
           {/* Conversation area */}
           <div 
@@ -888,6 +1091,24 @@ Respond as if you are speaking to the caller directly. Keep your response brief,
           0% { transform: scaleY(0.7); }
           50% { transform: scaleY(1); }
           100% { transform: scaleY(0.7); }
+        }
+        
+        input[type=range]::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 16px;
+          height: 16px;
+          border-radius: 50%;
+          background: #3b82f6;
+          cursor: pointer;
+        }
+        
+        input[type=range]::-moz-range-thumb {
+          width: 16px;
+          height: 16px;
+          border-radius: 50%;
+          background: #3b82f6;
+          cursor: pointer;
         }
       `}</style>
     </div>
