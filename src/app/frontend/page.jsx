@@ -1,14 +1,34 @@
-// App.jsx
+"use client";
 import { useState } from "react";
 import { Home } from "./components/Home";
 import { Info } from "./components/Info";
 import Search from "./components/Search";
 import { Report } from "./components/Report";
 import { Defense } from "./components/Defense";
+import { useResponsive } from "./hooks/useResponsive";
 import "./App.css";
 
 function App() {
   const [activeTab, setActiveTab] = useState("home");
+  const { deviceType, isMobile, isTablet, isDesktop, isLargeDesktop } = useResponsive();
+
+  // Get page title based on active tab
+  const getPageTitle = () => {
+    switch (activeTab) {
+      case "home":
+        return "Home";
+      case "info":
+        return "Information";
+      case "search":
+        return "Search";
+      case "report":
+        return "Report";
+      case "defense":
+        return "Defense";
+      default:
+        return "Home";
+    }
+  };
 
   const renderContent = () => {
     switch (activeTab) {
@@ -31,10 +51,15 @@ function App() {
     <div className="app-container">
       <header className="app-header">
         <div className="header-content">
-          <span className="page-title">Home Page</span>
+          <span className="page-title">{getPageTitle()}</span>
           <div className="user-section">
             <span className="user-name">Sathyameva Jayadhe</span>
             <div className="user-controls">
+              {!isMobile && (
+                <span className="device-type-indicator">
+                  {deviceType}
+                </span>
+              )}
               <button className="settings-button">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"

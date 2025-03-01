@@ -1,5 +1,5 @@
 'use client';
-// import "./App.css";
+import "./App.css";
 import SendMessage from "./SendMessage";
 
 function App() {

@@ -53,57 +53,84 @@ export default function SpamDetection() {
       
       // Check if the message contains links
       const urls = extractUrls(message);
-      let linkData = null;
       
-      // If links are found, scrape them
-      if (urls.length > 0) {
-        setIsScrapingLinks(true);
-        try {
-          linkData = await analyzeLinkContent(message);
-        } catch (scrapeError) {
-          console.error('Error scraping links:', scrapeError);
-        } finally {
-          setIsScrapingLinks(false);
-        }
-      }
+      // Start both operations in parallel
+      const operations = [];
       
-      // Store link analysis results
-      setLinkAnalysis(linkData);
-      
-      // Prepare context for the LLM with link data if available
-      let contextWithLinks = message;
-      if (linkData && linkData.foundLinks) {
-        const linkContext = linkData.processedLinks.map(link => {
-          return `
-Link: ${link.url}
-Title: ${link.title || 'N/A'}
-Description: ${link.metaDescription || 'N/A'}
-Has Login Form: ${link.hasLoginForm ? 'Yes (SUSPICIOUS)' : 'No'}
-Content: ${link.scrapedContent || 'N/A'}
-          `.trim();
-        }).join('\n\n');
-        
-        contextWithLinks = `${message}\n\nWEBSITE CONTENT FROM LINKS:\n${linkContext}`;
-      }
-      
+      // 1. Start the basic LLM analysis immediately
       const model = new ChatGoogleGenerativeAI({
         modelName: "gemini-2.0-flash-lite",
         maxOutputTokens: 2048,
         apiKey: process.env.NEXT_PUBLIC_GOOGLE_API_KEY,
       });
-
-      // Include link data in the prompt if available
-      const prompt = linkData && linkData.foundLinks
-        ? `You are a spam detection system. Analyze this SMS message and the content of links it contains. Return a JSON object with spamScore (0-100), dangerScore (0-100), and warnings array. Pay special attention to phishing attempts, suspicious links, and misleading content.\n\nMESSAGE AND LINK CONTENT:\n${contextWithLinks}`
-        : `You are a spam detection system. Analyze this SMS message and return a JSON object with spamScore (0-100), dangerScore (0-100), and warnings array: ${message}`;
       
-      const response = await model.invoke(prompt);
+      const basicPrompt = `You are a spam detection system. Analyze this SMS message and return a JSON object with spamScore (0-100), dangerScore (0-100), and warnings array: ${message}`;
+      const basicAnalysisPromise = model.invoke(basicPrompt);
+      operations.push(basicAnalysisPromise);
       
-      setResult(response);
+      // 2. Start link scraping in parallel (if links exist)
+      let linkData = null;
+      let enhancedAnalysisPromise = null;
+      
+      if (urls.length > 0) {
+        setIsScrapingLinks(true);
+        
+        // Create a promise for link scraping
+        const linkScrapingPromise = analyzeLinkContent(message)
+          .then(data => {
+            linkData = data;
+            setLinkAnalysis(data);
+            
+            // If links were found and scraped successfully, do an enhanced analysis
+            if (data && data.foundLinks && data.processedLinks.length > 0) {
+              // Prepare context with link data
+              const linkContext = data.processedLinks.map(link => {
+                return `
+Link: ${link.url}
+Title: ${link.title || 'N/A'}
+Description: ${link.metaDescription || 'N/A'}
+Has Login Form: ${link.hasLoginForm ? 'Yes (SUSPICIOUS)' : 'No'}
+Content: ${link.scrapedContent || 'N/A'}
+                `.trim();
+              }).join('\n\n');
+              
+              const contextWithLinks = `${message}\n\nWEBSITE CONTENT FROM LINKS:\n${linkContext}`;
+              
+              // Create enhanced prompt with link data
+              const enhancedPrompt = `You are a spam detection system. Analyze this SMS message and the content of links it contains. Return a JSON object with spamScore (0-100), dangerScore (0-100), and warnings array. Pay special attention to phishing attempts, suspicious links, and misleading content.\n\nMESSAGE AND LINK CONTENT:\n${contextWithLinks}`;
+              
+              // Start enhanced analysis
+              return model.invoke(enhancedPrompt);
+            }
+            
+            // If no links were found or scraping failed, return null
+            return null;
+          })
+          .catch(error => {
+            console.error('Error scraping links:', error);
+            return null;
+          })
+          .finally(() => {
+            setIsScrapingLinks(false);
+          });
+        
+        operations.push(linkScrapingPromise);
+      }
+      
+      // Wait for all operations to complete
+      const results = await Promise.all(operations);
+      
+      // Use enhanced analysis if available, otherwise use basic analysis
+      const basicAnalysisResult = results[0];
+      const enhancedAnalysisResult = urls.length > 0 ? results[1] : null;
+      
+      // Prefer enhanced analysis if available
+      const finalResult = enhancedAnalysisResult || basicAnalysisResult;
+      setResult(finalResult);
       
       try {
         // Try to parse the response content
-        const content = response.content || response;
+        const content = finalResult.content || finalResult;
         const jsonMatch = content.match(/\{[\s\S]*\}/);
         const jsonStr = jsonMatch ? jsonMatch[0] : content;
         const parsed = JSON.parse(jsonStr);
