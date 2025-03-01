@@ -1,0 +1,45 @@
+"filename", "language", "JSON", "JSON with Comments", "JavaScript", "TypeScript", "Markdown", "pip requirements", "MS SQL", "Python", "TypeScript JSX", "JavaScript JSX", "CSS", "XML", "HTML", "comment", "blank", "total"
+"d:\Hackathons\Hackify 2.0\criminus\OpenCV\detect_gender_webcam.py", "Python", 0, 0, 0, 0, 0, 0, 0, 90, 0, 0, 0, 0, 0, 21, 34, 145
+"d:\Hackathons\Hackify 2.0\criminus\OpenCV\flask_app.py", "Python", 0, 0, 0, 0, 0, 0, 0, 130, 0, 0, 0, 0, 0, 14, 43, 187
+"d:\Hackathons\Hackify 2.0\criminus\OpenCV\requirements.txt", "pip requirements", 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7
+"d:\Hackathons\Hackify 2.0\criminus\OpenCV\templates\index.html", "HTML", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 238, 0, 25, 263
+"d:\Hackathons\Hackify 2.0\criminus\README.md", "Markdown", 0, 0, 0, 0, 23, 0, 0, 0, 0, 0, 0, 0, 0, 0, 14, 37
+"d:\Hackathons\Hackify 2.0\criminus\eslint.config.mjs", "JavaScript", 0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 15
+"d:\Hackathons\Hackify 2.0\criminus\jsconfig.json", "JSON with Comments", 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 9
+"d:\Hackathons\Hackify 2.0\criminus\next.config.mjs", "JavaScript", 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 5
+"d:\Hackathons\Hackify 2.0\criminus\package-lock.json", "JSON", 7240, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 7241
+"d:\Hackathons\Hackify 2.0\criminus\package.json", "JSON", 37, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 38
+"d:\Hackathons\Hackify 2.0\criminus\postcss.config.mjs", "JavaScript", 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 6
+"d:\Hackathons\Hackify 2.0\criminus\src\app\anonymousReport\App.css", "CSS", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 90, 0, 0, 0, 2, 92
+"d:\Hackathons\Hackify 2.0\criminus\src\app\anonymousReport\SendMessage.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 122, 0, 0, 0, 0, 12, 18, 152
+"d:\Hackathons\Hackify 2.0\criminus\src\app\anonymousReport\page.jsx", "JavaScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 0, 15, 0, 0, 0, 0, 3, 18
+"d:\Hackathons\Hackify 2.0\criminus\src\app\api\analyze-links\route.js", "JavaScript", 0, 0, 99, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 24, 17, 140
+"d:\Hackathons\Hackify 2.0\criminus\src\app\dispatch\README.md", "Markdown", 0, 0, 0, 0, 71, 0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 84
+"d:\Hackathons\Hackify 2.0\criminus\src\app\dispatch\page.jsx", "JavaScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 0, 740, 0, 0, 0, 53, 99, 892
+"d:\Hackathons\Hackify 2.0\criminus\src\app\frontend\App.css", "CSS", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1040, 0, 0, 38, 169, 1247
+"d:\Hackathons\Hackify 2.0\criminus\src\app\frontend\assets\react.svg", "XML", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1
+"d:\Hackathons\Hackify 2.0\criminus\src\app\frontend\components\Defense.css", "CSS", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 359, 0, 0, 14, 62, 435
+"d:\Hackathons\Hackify 2.0\criminus\src\app\frontend\components\Defense.jsx", "JavaScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 0, 397, 0, 0, 0, 20, 30, 447
+"d:\Hackathons\Hackify 2.0\criminus\src\app\frontend\components\Home.jsx", "JavaScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 0, 82, 0, 0, 0, 2, 7, 91
+"d:\Hackathons\Hackify 2.0\criminus\src\app\frontend\components\Info.css", "CSS", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 121, 0, 0, 0, 19, 140
+"d:\Hackathons\Hackify 2.0\criminus\src\app\frontend\components\Info.jsx", "JavaScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 0, 274, 0, 0, 0, 2, 11, 287
+"d:\Hackathons\Hackify 2.0\criminus\src\app\frontend\components\Report.jsx", "JavaScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 0, 36, 0, 0, 0, 0, 2, 38
+"d:\Hackathons\Hackify 2.0\criminus\src\app\frontend\components\Search.jsx", "JavaScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 0, 269, 0, 0, 0, 11, 23, 303
+"d:\Hackathons\Hackify 2.0\criminus\src\app\frontend\hooks\useResponsive.js", "JavaScript", 0, 0, 37, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 7, 49
+"d:\Hackathons\Hackify 2.0\criminus\src\app\frontend\index.css", "CSS", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 61, 0, 0, 0, 8, 69
+"d:\Hackathons\Hackify 2.0\criminus\src\app\frontend\main.jsx", "JavaScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 2, 11
+"d:\Hackathons\Hackify 2.0\criminus\src\app\frontend\page.jsx", "JavaScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 0, 178, 0, 0, 0, 1, 8, 187
+"d:\Hackathons\Hackify 2.0\criminus\src\app\frontend\utils\responsive.js", "JavaScript", 0, 0, 36, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 51, 13, 100
+"d:\Hackathons\Hackify 2.0\criminus\src\app\globals.css", "CSS", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 20, 0, 0, 0, 5, 25
+"d:\Hackathons\Hackify 2.0\criminus\src\app\layout.js", "JavaScript", 0, 0, 29, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 34
+"d:\Hackathons\Hackify 2.0\criminus\src\app\page.jsx", "JavaScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 0, 26, 0, 0, 0, 1, 5, 32
+"d:\Hackathons\Hackify 2.0\criminus\src\app\sensor\page.jsx", "JavaScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 0, 75, 0, 0, 0, 0, 8, 83
+"d:\Hackathons\Hackify 2.0\criminus\src\app\spam\page.jsx", "JavaScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 0, 283, 0, 0, 0, 23, 42, 348
+"d:\Hackathons\Hackify 2.0\criminus\src\app\supa\page.tsx", "TypeScript JSX", 0, 0, 0, 0, 0, 0, 0, 0, 108, 0, 0, 0, 0, 2, 15, 125
+"d:\Hackathons\Hackify 2.0\criminus\src\db\schema.sql", "MS SQL", 0, 0, 0, 0, 0, 0, 13, 0, 0, 0, 0, 0, 0, 3, 2, 18
+"d:\Hackathons\Hackify 2.0\criminus\src\utils\linkScraper.js", "JavaScript", 0, 0, 47, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 16, 8, 71
+"d:\Hackathons\Hackify 2.0\criminus\src\utils\speechUtils.js", "JavaScript", 0, 0, 60, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 29, 11, 100
+"d:\Hackathons\Hackify 2.0\criminus\src\utils\supabase\client.ts", "TypeScript", 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 8
+"d:\Hackathons\Hackify 2.0\criminus\src\utils\supabase\server.ts", "TypeScript", 0, 0, 0, 23, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 25
+"d:\Hackathons\Hackify 2.0\criminus\tsconfig.json", "JSON with Comments", 0, 35, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 36
+"Total", "-", 7277, 43, 324, 30, 94, 7, 13, 220, 230, 2384, 1691, 1, 238, 343, 746, 13641
