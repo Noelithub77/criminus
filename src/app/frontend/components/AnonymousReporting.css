@@ -3,7 +3,6 @@
   color: #ffffff;
   width: 100%;
   max-width: 500px;
-  padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -66,6 +65,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  width: 50vw;
 }
 
 .icon-button {
@@ -168,7 +168,7 @@
 .submit-button {
   bottom: 12px;
   left: 0px;
-  background-color: #175f63;
+  background-color: #3a4e57;
   color: white;
   border: none;
   border-radius: 50%;
