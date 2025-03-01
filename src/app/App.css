@@ -653,7 +653,7 @@ body {
 .j-ethical-mascot {
   width: 100%;
   height: 100%;
-  background-image: url("assets/image.png");
+  background-image: url("./frontend/assets/image.png");
   background-repeat: no-repeat;
   background-position: center;
   background-size: cover;
