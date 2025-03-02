@@ -169,7 +169,7 @@ export function Home() {
               <img src="/assets/bell.png" />
               <h2>Announcements</h2>
             </div>
-            <div className="announcement-card">
+            <div className="announcement-card" style={{ overflow: 'hidden', width: '100%' }}>
               <div
                 style={{
                   backgroundColor: "#5190a5",
@@ -226,10 +226,14 @@ export function Home() {
                       Aluva Cyber Police
                     </h3>
                     <p
-                      style={{
+                      style={{  
                         fontSize: "clamp(14px, 3.5vw, 16px)",
                         lineHeight: "1.4",
                         margin: "0",
+                        wordWrap: "break-word",
+                        overflowWrap: "break-word",
+                        hyphens: "auto",
+                        maxWidth: "100%"
                       }}
                     >
                       Online Fraud scam investigation. Apprehend the thief and

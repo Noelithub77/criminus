@@ -230,7 +230,11 @@ export default function CrimeHeatmap() {
   // const [heatmap, setHeatmap] = useState(null);
 
   const onLoad = useCallback(function callback(map) {
-    setMap(map);
+    if (map) {
+      setMap(map);
+      // Ensure center is set with valid coordinates
+      map.setCenter(center);
+    }
   }, []);
 
   const onUnmount = useCallback(function callback() {
@@ -246,7 +250,10 @@ export default function CrimeHeatmap() {
     return (
       <Marker
         key={crime.id}
-        position={crime.location}
+        position={{
+          lat: crime.location.lat || 10.0555555,
+          lng: crime.location.lng || 76.6191
+        }}
         icon={{
           path: "M-10,0a10,10 0 1,0 20,0a10,10 0 1,0 -20,0",
           fillColor: crimeInfo.color,
