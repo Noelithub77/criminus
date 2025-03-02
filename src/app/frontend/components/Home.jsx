@@ -320,7 +320,7 @@ export function Home() {
                 style={{ cursor: "pointer" }}
               >
                 <div className="feature-icon">
-                  <img src="/assets/dispatch.svg" />
+                  <img src="/assets/Call_dispatch.png" />
                 </div>
                 <div className="feature-details">
                   <h3>Emergency Dispatch</h3>
@@ -336,7 +336,7 @@ export function Home() {
                 style={{ cursor: "pointer" }}
               >
                 <div className="feature-icon">
-                  <img src="/assets/anonymous.svg" />
+                  <img src="/assets/report.svg" />
                 </div>
                 <div className="feature-details">
                   <h3>Anonymous Reporting</h3>
