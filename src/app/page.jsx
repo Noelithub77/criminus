@@ -127,7 +127,7 @@ function App() {
                 </svg>
               </button>
               <div className="avatar">
-                <img src="/placeholder-avatar.png" alt="User avatar" />
+                <img src="/assets/im2.png" alt="User avatar" />
               </div>
             </div>
           </div>
