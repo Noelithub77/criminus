@@ -9,7 +9,6 @@ const nextConfig = withPWA({
 })({
   // Next.js configuration
   reactStrictMode: true,
-  swcMinify: true,
 });
 
 export default nextConfig;
