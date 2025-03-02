@@ -11,13 +11,22 @@ export const breakpoints = {
 };
 
 /**
+ * Safe check for window object
+ * @returns {boolean} True if window is defined (client-side)
+ */
+export const isClient = () => {
+  return typeof window !== 'undefined';
+};
+
+/**
  * Get the current device type based on window width
  * @returns {string} The device type: 'Mobile', 'Tablet', 'Desktop', or 'Large Desktop'
  */
 export const getDeviceType = (width) => {
-  if (typeof window === 'undefined' && !width) return 'Mobile'; // Default for SSR
+  // Default to Mobile for SSR
+  if (!isClient() && !width) return 'Mobile';
   
-  const currentWidth = width || window.innerWidth;
+  const currentWidth = width || (isClient() ? window.innerWidth : 0);
   
   if (currentWidth <= breakpoints.mobile) return 'Mobile';
   if (currentWidth <= breakpoints.tablet) return 'Tablet';
@@ -30,9 +39,10 @@ export const getDeviceType = (width) => {
  * @returns {boolean} True if the device is mobile
  */
 export const isMobile = (width) => {
-  if (typeof window === 'undefined' && !width) return true; // Default for SSR
+  // Default to true for SSR (mobile-first approach)
+  if (!isClient() && !width) return true;
   
-  const currentWidth = width || window.innerWidth;
+  const currentWidth = width || (isClient() ? window.innerWidth : 0);
   return currentWidth <= breakpoints.mobile;
 };
 
@@ -41,9 +51,10 @@ export const isMobile = (width) => {
  * @returns {boolean} True if the device is tablet
  */
 export const isTablet = (width) => {
-  if (typeof window === 'undefined' && !width) return false; // Default for SSR
+  // Default to false for SSR
+  if (!isClient() && !width) return false;
   
-  const currentWidth = width || window.innerWidth;
+  const currentWidth = width || (isClient() ? window.innerWidth : 0);
   return currentWidth > breakpoints.mobile && currentWidth <= breakpoints.tablet;
 };
 
@@ -52,9 +63,10 @@ export const isTablet = (width) => {
  * @returns {boolean} True if the device is desktop
  */
 export const isDesktop = (width) => {
-  if (typeof window === 'undefined' && !width) return false; // Default for SSR
+  // Default to false for SSR
+  if (!isClient() && !width) return false;
   
-  const currentWidth = width || window.innerWidth;
+  const currentWidth = width || (isClient() ? window.innerWidth : 0);
   return currentWidth > breakpoints.tablet;
 };
 
@@ -69,9 +81,9 @@ export const useWindowDimensions = () => {
   // Example implementation:
   /*
   const [windowDimensions, setWindowDimensions] = useState({
-    width: typeof window !== 'undefined' ? window.innerWidth : 0,
-    height: typeof window !== 'undefined' ? window.innerHeight : 0,
-    deviceType: getDeviceType(typeof window !== 'undefined' ? window.innerWidth : 0)
+    width: isClient() ? window.innerWidth : 0,
+    height: isClient() ? window.innerHeight : 0,
+    deviceType: getDeviceType(isClient() ? window.innerWidth : 0)
   });
 
   useEffect(() => {
@@ -83,7 +95,7 @@ export const useWindowDimensions = () => {
       });
     };
 
-    if (typeof window !== 'undefined') {
+    if (isClient()) {
       window.addEventListener('resize', handleResize);
       return () => window.removeEventListener('resize', handleResize);
     }
@@ -93,8 +105,8 @@ export const useWindowDimensions = () => {
   */
   
   return {
-    width: typeof window !== 'undefined' ? window.innerWidth : 0,
-    height: typeof window !== 'undefined' ? window.innerHeight : 0,
-    deviceType: getDeviceType(typeof window !== 'undefined' ? window.innerWidth : 0)
+    width: isClient() ? window.innerWidth : 0,
+    height: isClient() ? window.innerHeight : 0,
+    deviceType: getDeviceType(isClient() ? window.innerWidth : 0)
   };
 }; 
