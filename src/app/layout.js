@@ -1,4 +1,3 @@
-
 import { Geist, DM_Sans } from "next/font/google";
 import "./globals.css";
 import Script from "next/script";
@@ -16,9 +15,7 @@ const dmSans = DM_Sans({
 export const metadata = {
   title: "Criminus",
   description: "Criminus, a anti crime software",
-  viewport: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, shrink-to-fit=no",
   manifest: "/manifest.json",
-  themeColor: "#000000",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -26,12 +23,19 @@ export const metadata = {
   },
 };
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  shrinkToFit: false,
+  themeColor: "#000000",
+};
+
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className="h-full">
       <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, shrink-to-fit=no" />
-        <meta name="theme-color" content="#000000" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="Criminus" />

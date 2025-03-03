@@ -17,11 +17,10 @@ const ChildSafety = () => {
   const [loadingState, setLoadingState] = useState("initializing");
 
   const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY!, // Replace with your API key
+    googleMapsApiKey: "AIzaSyDG72s5tGbES5N7ZF26tTZw40TvSrm0vIA",
   });
 
   useEffect(() => {
-    // Fetch the most recent incident data
     async function fetchLatestIncident() {
       setLoadingState("fetching incident");
 
@@ -45,7 +44,6 @@ const ChildSafety = () => {
 
         setIncident(data[0]);
 
-        // Set audio URL if it exists
         if (data[0].audio_url) {
           setAudioUrl(data[0].audio_url);
           setLoadingState("audio URL set");
@@ -77,21 +75,25 @@ const ChildSafety = () => {
       {/* Map Card */}
       <div className="map-card">
         <div className="map-container">
-          {isLoaded && incident && (
+          {isLoaded && (
             <GoogleMap
               mapContainerStyle={{ width: "100%", height: "156px" }}
               center={{
-                lat: Number(incident.latitude),
-                lng: Number(incident.longitude),
+                lat: incident
+                  ? Number(incident.latitude) || 10.0555555
+                  : 10.0555555,
+                lng: incident ? Number(incident.longitude) || 76.6191 : 76.6191,
               }}
               zoom={15}
             >
-              <Marker
-                position={{
-                  lat: Number(incident.latitude),
-                  lng: Number(incident.longitude),
-                }}
-              />
+              {incident && incident.latitude && incident.longitude && (
+                <Marker
+                  position={{
+                    lat: Number(incident.latitude),
+                    lng: Number(incident.longitude),
+                  }}
+                />
+              )}
             </GoogleMap>
           )}
           {/* {incident && (

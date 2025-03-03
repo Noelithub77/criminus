@@ -15,13 +15,13 @@ export const breakpoints = {
  * @returns {string} The device type: 'Mobile', 'Tablet', 'Desktop', or 'Large Desktop'
  */
 export const getDeviceType = (width) => {
-  if (typeof window === 'undefined' && !width) return 'Mobile'; // Default for SSR
+  if (typeof width === 'undefined' || width === null) {
+    return 'Mobile'; // Default for SSR
+  }
   
-  const currentWidth = width || window.innerWidth;
-  
-  if (currentWidth <= breakpoints.mobile) return 'Mobile';
-  if (currentWidth <= breakpoints.tablet) return 'Tablet';
-  if (currentWidth <= breakpoints.desktop) return 'Desktop';
+  if (width <= breakpoints.mobile) return 'Mobile';
+  if (width <= breakpoints.tablet) return 'Tablet';
+  if (width <= breakpoints.desktop) return 'Desktop';
   return 'Large Desktop';
 };
 
@@ -30,10 +30,11 @@ export const getDeviceType = (width) => {
  * @returns {boolean} True if the device is mobile
  */
 export const isMobile = (width) => {
-  if (typeof window === 'undefined' && !width) return true; // Default for SSR
+  if (typeof width === 'undefined' || width === null) {
+    return true; // Default for SSR
+  }
   
-  const currentWidth = width || window.innerWidth;
-  return currentWidth <= breakpoints.mobile;
+  return width <= breakpoints.mobile;
 };
 
 /**
@@ -41,10 +42,11 @@ export const isMobile = (width) => {
  * @returns {boolean} True if the device is tablet
  */
 export const isTablet = (width) => {
-  if (typeof window === 'undefined' && !width) return false; // Default for SSR
+  if (typeof width === 'undefined' || width === null) {
+    return false; // Default for SSR
+  }
   
-  const currentWidth = width || window.innerWidth;
-  return currentWidth > breakpoints.mobile && currentWidth <= breakpoints.tablet;
+  return width > breakpoints.mobile && width <= breakpoints.tablet;
 };
 
 /**
@@ -52,10 +54,11 @@ export const isTablet = (width) => {
  * @returns {boolean} True if the device is desktop
  */
 export const isDesktop = (width) => {
-  if (typeof window === 'undefined' && !width) return false; // Default for SSR
+  if (typeof width === 'undefined' || width === null) {
+    return false; // Default for SSR
+  }
   
-  const currentWidth = width || window.innerWidth;
-  return currentWidth > breakpoints.tablet;
+  return width > breakpoints.tablet;
 };
 
 /**
@@ -92,9 +95,18 @@ export const useWindowDimensions = () => {
   return windowDimensions;
   */
   
+  // Safe implementation for SSR
+  if (typeof window === 'undefined') {
+    return {
+      width: 0,
+      height: 0,
+      deviceType: 'Mobile'
+    };
+  }
+  
   return {
-    width: typeof window !== 'undefined' ? window.innerWidth : 0,
-    height: typeof window !== 'undefined' ? window.innerHeight : 0,
-    deviceType: getDeviceType(typeof window !== 'undefined' ? window.innerWidth : 0)
+    width: window.innerWidth,
+    height: window.innerHeight,
+    deviceType: getDeviceType(window.innerWidth)
   };
 }; 

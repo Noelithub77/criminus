@@ -9,7 +9,22 @@ const nextConfig = withPWA({
 })({
   // Next.js configuration
   reactStrictMode: true,
-  swcMinify: true,
+  
+  // Explicitly configure the build system
+  experimental: {
+    // Use Turbopack in development for faster refresh
+    turbo: {
+      loaders: {
+        // Add any custom loaders if needed
+      },
+    },
+  },
+  
+  // Webpack configuration if needed
+  webpack: (config, { isServer }) => {
+    // Keep the existing webpack configuration
+    return config;
+  },
 });
 
 export default nextConfig;

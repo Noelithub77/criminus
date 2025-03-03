@@ -1,18 +1,64 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Home } from "./frontend/components/Home";
 import Info from "./frontend/components/Info";
 import Search from "./frontend/components/Search";
 import { Report } from "./frontend/components/Report";
 import Defense from "./frontend/components/Defense";
 import LeadPrediction from "./frontend/components/LeadPrediction";
-import { useResponsive } from "./frontend/hooks/useResponsive";
 import "./App.css";
 
+// Client-side only component
 function App() {
   const [activeTab, setActiveTab] = useState("home");
-  const { deviceType, isMobile, isTablet, isDesktop, isLargeDesktop } =
-    useResponsive();
+  const [isMounted, setIsMounted] = useState(false);
+  const [deviceType, setDeviceType] = useState("Mobile");
+  const [dimensions, setDimensions] = useState({
+    width: 0,
+    height: 0
+  });
+
+  // Handle window-related operations only after component is mounted
+  useEffect(() => {
+    setIsMounted(true);
+    
+    // Set initial dimensions and device type
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    setDimensions({ width, height });
+    
+    // Simple device type detection
+    if (width <= 767) {
+      setDeviceType("Mobile");
+    } else if (width <= 1023) {
+      setDeviceType("Tablet");
+    } else if (width <= 1439) {
+      setDeviceType("Desktop");
+    } else {
+      setDeviceType("Large Desktop");
+    }
+    
+    // Add resize listener
+    const handleResize = () => {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      setDimensions({ width, height });
+      
+      // Update device type on resize
+      if (width <= 767) {
+        setDeviceType("Mobile");
+      } else if (width <= 1023) {
+        setDeviceType("Tablet");
+      } else if (width <= 1439) {
+        setDeviceType("Desktop");
+      } else {
+        setDeviceType("Large Desktop");
+      }
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Get page title based on active tab
   const getPageTitle = () => {
@@ -49,6 +95,13 @@ function App() {
     }
   };
 
+  // Don't render anything until client-side hydration is complete
+  if (!isMounted) {
+    return <div className="loading">Loading...</div>;
+  }
+
+  const isMobile = dimensions.width <= 767;
+
   return (
     <div className="app-container">
       <header className="app-header">
@@ -74,7 +127,7 @@ function App() {
                 </svg>
               </button>
               <div className="avatar">
-                <img src="/placeholder-avatar.png" alt="User avatar" />
+                <img src="/assets/im2.png" alt="User avatar" />
               </div>
             </div>
           </div>

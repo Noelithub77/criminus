@@ -47,7 +47,4 @@ Access the Lead Prediction feature from the Home screen by clicking on the Lead 
 2. View structured responses with diagrams, tables, and lists
 3. Try predefined prompts for common investigation workflows
 4. Interact with diagrams in fullscreen mode
-
-## License
-
-[MIT License](LICENSE)
+   

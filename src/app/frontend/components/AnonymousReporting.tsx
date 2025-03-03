@@ -52,9 +52,10 @@ const AnonymousReporting = () => {
     height: "160px",
   };
 
+  // Provide default coordinates if latitude/longitude are null
   const center = {
-    lat: latitude,
-    lng: longitude,
+    lat: latitude || 10.0555555, // Default to Kothamangalam coordinates
+    lng: longitude || 76.6191,
   };
   // Handle file selection from gallery or camera
   const handleFileSelect = async (event, source) => {
